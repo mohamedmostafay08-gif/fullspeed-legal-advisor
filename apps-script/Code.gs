@@ -27,7 +27,7 @@ function doGet() {
   var t = HtmlService.createTemplateFromFile('Index');
   return t.evaluate()
     .setTitle(APP_NAME + ' | ' + getSetting_('company_name', 'Full Speed'))
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 

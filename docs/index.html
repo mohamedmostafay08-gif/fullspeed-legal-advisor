@@ -4,7 +4,7 @@
     <meta charset="utf-8">
   <meta name="theme-color" content="#F4F6F3">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -88,7 +88,7 @@ p { margin: 0 0 8px; }
   box-shadow: 0 0 0 1px var(--line-2), 0 8px 24px -10px var(--glow); overflow: hidden; }
 .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
 .logo-text { display: flex; flex-direction: column; line-height: 1.15; }
-.logo-text b { font-family: var(--font-display); font-size: 22px; letter-spacing: .02em; text-transform: uppercase; font-weight: 800; }
+.logo-text b { white-space: nowrap; font-family: var(--font-display); font-size: 22px; letter-spacing: .02em; text-transform: uppercase; font-weight: 800; }
 .logo-text b em { font-style: normal; color: var(--green-2); }
 .logo-text span { font-size: 12px; color: var(--muted); }
 
@@ -145,7 +145,7 @@ input[type=checkbox] { accent-color: var(--green); width: 16px; height: 16px; }
 .alert ul { padding-inline-start: 18px; }
 
 .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; position: relative; flex-wrap: wrap; }
-.seg button { position: relative; z-index: 1; border: none; background: transparent; padding: 8px 16px; border-radius: 999px; cursor: pointer;
+.seg button { white-space: nowrap; position: relative; z-index: 1; border: none; background: transparent; padding: 8px 16px; border-radius: 999px; cursor: pointer;
   font: 600 13.5px var(--font-ar); color: var(--muted); transition: color .25s, background .25s; }
 .seg button:hover { color: var(--ink); }
 .seg button.on { background: var(--surface); color: var(--green); box-shadow: var(--shadow), 0 0 0 1px var(--line); }
@@ -180,13 +180,9 @@ input[type=checkbox] { accent-color: var(--green); width: 16px; height: 16px; }
 details.more summary { cursor: pointer; color: var(--green); font-weight: 600; font-size: 14px; margin: 6px 0 14px; }
 
 /* ============ الدخول: شبكة مربعات تفاعلية بملء الشاشة ============ */
-.auth { position: relative; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 28px 16px; overflow: hidden; isolation: isolate; }
-.cells { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(auto-fill, 72px); grid-auto-rows: 72px; gap: 6px; padding: 6px;
-  justify-content: center; align-content: center; -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 30%, transparent 85%); mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 30%, transparent 85%); }
-.cells i { border-radius: 14px; background: var(--cell); border: 1px solid var(--cell-line); transition: background .6s var(--ease), border-color .6s, box-shadow .6s, transform .6s var(--ease); }
-.cells i.lit { background: color-mix(in srgb, var(--green) 12%, var(--cell)); border-color: var(--green); box-shadow: 0 0 28px -4px var(--glow), inset 0 0 0 1px color-mix(in srgb, var(--green) 30%, transparent); }
-.cells i.lit.logo-cell { background: var(--deep) center/70% no-repeat; }
-.cells i.hot { background: color-mix(in srgb, var(--green) 20%, var(--cell)); border-color: var(--green-2); transform: scale(.94); transition-duration: .15s; }
+.auth { position: relative; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 28px 16px; overflow: hidden; isolation: isolate;
+  background: radial-gradient(ellipse 60% 50% at 85% 20%, color-mix(in srgb, var(--green) 10%, transparent), transparent 70%),
+              radial-gradient(ellipse 50% 45% at 10% 90%, color-mix(in srgb, var(--green) 7%, transparent), transparent 70%), var(--bg); }
 .auth-wrap { width: 100%; max-width: 1180px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; }
 .auth-intro h1 { font-family: var(--font-ar-display); font-weight: 800; font-size: clamp(34px, 4.6vw, 60px); line-height: 1.2; margin: 18px 0 14px; letter-spacing: -.01em; }
 .auth-intro h1 em { font-style: normal; color: var(--green); }
@@ -217,7 +213,6 @@ details.more summary { cursor: pointer; color: var(--green); font-weight: 600; f
   .auth-intro p, .auth-points { display: none; }
   .typer { font-size: 13.5px; }
   .auth-card { padding: 24px 20px; }
-  .cells { grid-template-columns: repeat(auto-fill, 52px); grid-auto-rows: 52px; align-content: start; }
 }
 
 /* ============ هيكل التطبيق ============ */
@@ -309,9 +304,8 @@ details.more summary { cursor: pointer; color: var(--green); font-weight: 600; f
 @keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
 
 /* ============ الرئيسية ============ */
-.hero { position: relative; overflow: hidden; isolation: isolate; border-radius: 24px; padding: clamp(24px, 4vw, 44px); background: var(--deep); color: #E6F3E8; border: 1px solid var(--line); margin-bottom: 18px; }
-.hero .cells { --cell: rgba(255,255,255,.035); --cell-line: rgba(255,255,255,.06); --green: #34B24C; --glow: rgba(52,178,76,.55); grid-template-columns: repeat(auto-fill, 58px); grid-auto-rows: 58px;
-  justify-content: end; -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 55%); mask-image: linear-gradient(90deg, transparent 0%, #000 55%); }
+.hero { position: relative; overflow: hidden; isolation: isolate; border-radius: 24px; padding: clamp(24px, 4vw, 44px);
+  background: radial-gradient(ellipse 55% 90% at 0% 100%, rgba(52, 178, 76, .22), transparent 70%), linear-gradient(135deg, #0F2A17, #0A1C10); color: #E6F3E8; border: 1px solid var(--line); margin-bottom: 18px; }
 .hero .kicker { color: #5BD06F; }
 .hero h2 { font-size: clamp(26px, 3.2vw, 40px); font-weight: 800; margin: 10px 0 6px; color: #fff; }
 .hero h2 em { font-style: normal; color: #5BD06F; }
@@ -489,6 +483,58 @@ mark.pii { background: #FFE1CC; color: #8A3300; border-radius: 4px; padding: 0 3
   .printing::before { content: "المستشار القانوني — Full Speed"; display: block; font-weight: 800; font-size: 18px; margin: 0 22px 8px; visibility: visible; }
 }
 
+/* ============ ملاءمة شاشة الموبايل ============ */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { max-width: 100%; overflow-x: clip; }
+img, svg, video { max-width: 100%; }
+.content, .card, .main, .thread, .answer, .quote, .summary, .md, .art .tx, .list-row .t1, .vitem span { overflow-wrap: anywhere; }
+.main, .ask-layout > *, .dash-grid > *, .grid > * { min-width: 0; }
+@media (max-width: 900px) {
+  /* خط 16px في الحقول يمنع الآيفون من تكبير الصفحة عند الكتابة */
+  .input, select.input, textarea.input, .composer textarea, .hero-ask input, .palette-in input { font-size: 16px; }
+  .card { padding: 16px; border-radius: 14px; margin-bottom: 14px; }
+  .grid { gap: 12px; }
+  .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat .v { font-size: 34px; }
+  .stat .ic { width: 34px; height: 34px; top: 14px; inset-inline-end: 14px; }
+  .hero { border-radius: 18px; padding: 22px 18px; }
+  .hero h2 { font-size: 23px; }
+  .hero p { font-size: 14px; }
+  .hero-ask .btn { padding: 10px 14px; }
+  .quick { padding: 14px; }
+  .quick .ic { width: 40px; height: 40px; }
+  .quick p { display: none; }
+  .row { gap: 8px; }
+  .row > .input { min-width: 0 !important; }
+  .card-head h2 { font-size: 16px; }
+  .levels div, .example { padding: 10px; }
+  .tabs-scroll { margin-inline: -4px; }
+  .modal-b, .modal-h, .modal-f { padding-inline: 16px; }
+  .modal-f .btn { flex: 1; }
+  .a-actions { padding: 10px 14px; }
+  .answer .a-head, .answer .a-body { padding-inline: 14px; }
+  .t th, .t td { padding: 9px 6px; font-size: 13px; }
+  .welcome { padding-top: 10px; }
+  .welcome h2 { font-size: 21px; }
+  .welcome .orb { width: 58px; height: 58px; }
+  .stepper b { width: 28px; height: 28px; }
+  .stepper div:not(:last-child)::after { margin: 0 6px; }
+  .vlist { max-height: 55vh; }
+  .auth { padding-inline: 14px; }
+  .auth-intro h1 { font-size: 27px; }
+  .logo-text b { white-space: nowrap; font-size: 20px; }
+  .topbar .logo-mark { width: 38px; height: 38px; }
+  .seg button { white-space: nowrap; padding: 8px 13px; }
+  .kpi .v { font-size: 28px; }
+  .kpi { padding: 14px 16px; }
+}
+@media (max-width: 380px) {
+  .g4 { grid-template-columns: 1fr 1fr; }
+  .stat .v { font-size: 28px; }
+  .logo-text b { font-size: 19px; }
+  .tb-icon { width: 38px; height: 38px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
@@ -630,35 +676,6 @@ function logoutLocal() {
   renderAuth();
 }
 
-/** شبكة المربعات التفاعلية (مثل موقع Full Speed): مربعات تضيء عشوائياً، وتتفاعل مع حركة الماوس. */
-function mountCells(host, opts) {
-  opts = opts || {};
-  var size = opts.size || 78, box = host.getBoundingClientRect();
-  var cols = Math.ceil((box.width || window.innerWidth) / size) + 1, rows = Math.ceil((box.height || window.innerHeight) / size) + 1;
-  var n = Math.min(cols * rows, 420), html = '';
-  for (var i = 0; i < n; i++) html += '<i></i>';
-  var g = document.createElement('div');
-  g.className = 'cells'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = html;
-  host.insertBefore(g, host.firstChild);
-  var cells = g.children, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var timer = setInterval(function () {
-    if (!document.body.contains(g)) { clearInterval(timer); return; }
-    var c = cells[Math.floor(Math.random() * cells.length)];
-    var logoCell = Math.random() < 0.18;
-    c.classList.add('lit');
-    if (logoCell) { c.classList.add('logo-cell'); c.style.backgroundImage = 'url(' + LOGO_IMG + ')'; }
-    setTimeout(function () { c.classList.remove('lit', 'logo-cell'); c.style.backgroundImage = ''; }, reduce ? 2600 : 1900);
-  }, reduce ? 1500 : 420);
-  if (!reduce) g.parentNode.addEventListener('pointermove', function (e) {
-    var el = document.elementFromPoint(e.clientX, e.clientY);
-    if (el && el.parentNode === g && !el.classList.contains('hot')) {
-      el.classList.add('hot');
-      setTimeout(function () { el.classList.remove('hot'); }, 380);
-    }
-  });
-  return g;
-}
-
 var TYPER_LINES = ['موظف غاب 3 أيام بدون إذن… ما الجزاء؟', 'كيف أحسب الأجر الإضافي في يوم الراحة؟', 'ما الحد الأقصى للخصم من المرتب؟',
   'مدة إجازة الوضع للموظفة كام يوم؟', 'نسبة اشتراك التأمينات على صاحب العمل؟'];
 function startTyper(el) {
@@ -687,7 +704,6 @@ function authLayout(inner) {
 }
 function mountAuth(inner) {
   $('#root').innerHTML = authLayout(inner);
-  mountCells($('#auth'));
   startTyper($('#typer'));
   bindTheme();
 }
@@ -979,14 +995,13 @@ function viewHome(v) {
     '<button class="btn accent">' + ic('send') + 'اسأل</button></form></section>' +
     '<div class="grid g4 stagger" id="stats">' +
     [['book', 'مادة قانونية متاحة', 'articles'], ['scale', 'مخالفة في لائحة الجزاءات', 'violations'], ['ask', 'سؤال ليك الشهر ده', 'myMonth'], ['star', 'مادة في المفضلة', 'favorites']]
-      .map(function (s, i) { return '<div class="card stat" style="--i:' + i + '"><div class="ic">' + ic(s[0]) + '</div><div class="v num" data-k="' + s[2] + '">0</div><div class="l">' + s[1] + '</div></div>'; }).join('') +
+      .map(function (s, i) { return '<div class="card stat" style="--i:' + i + '"><div class="ic">' + ic(s[0]) + '</div><div class="v num" data-k="' + s[2] + '">–</div><div class="l">' + s[1] + '</div></div>'; }).join('') +
     '</div><div class="grid g4 stagger">' +
     [['ask', 'اسأل المستشار', 'سؤال أو حالة عملية بالتفصيل', 'ask'], ['scale', 'احسب جزاء', 'معالج بخطوات: المخالفة، التكرار، المواعيد', 'penalties'],
      ['file', 'اعمل مستند', 'إخطار، محضر تحقيق، قرار جزاء، إنذار', 'docs'], ['calc', 'الحاسبات', 'الإضافي، الخصم، التأمينات، الضريبة', 'calc']]
       .map(function (q, i) { return '<div class="card quick lift" style="--i:' + (i + 4) + '" data-goto="' + q[3] + '"><div class="ic">' + ic(q[0]) + '</div><h3>' + q[1] + '</h3><p>' + q[2] + '</p></div>'; }).join('') +
     '</div><div class="dash-grid"><div class="card"><div class="card-head"><h2>' + ic('clock') + ' آخر أسئلتك</h2><span class="spacer"></span><button class="btn ghost sm" data-goto="history">الكل</button></div><div id="recent"><div class="skeleton"><div></div><div></div></div></div></div>' +
     '<div class="card"><div class="card-head"><h2>' + ic('bell') + ' إيه الجديد</h2></div><div id="hnews"><div class="skeleton"><div></div><div></div></div></div></div></div>';
-  mountCells($('#hero'), { size: 64 });
   $('#hask').addEventListener('submit', function (e) { e.preventDefault(); go('ask', { q: $('#hq').value.trim(), send: !!$('#hq').value.trim() }); });
   $$('[data-goto]', v).forEach(function (c) { c.addEventListener('click', function () { go(c.dataset.goto); }); });
   api('dash').then(function (d) {
@@ -999,7 +1014,11 @@ function viewHome(v) {
     $('#hnews').innerHTML = renderNews(d.news, 6);
     bindNewsLinks($('#hnews'));
     if (!d.ai && isAdmin()) $('#hero').insertAdjacentHTML('beforeend', '<div class="alert warn" style="margin-top:16px;max-width:640px">' + ic('info') + '<div>مفيش مفتاح Gemini، فالبرنامج شغال في وضع البحث بس. ضيف المفتاح من الإدارة.</div></div>');
-  }).catch(function (e) { toast(e.message, true); });
+  }).catch(function (e) {
+    var msg = '<div class="alert bad">' + ic('alert') + '<div>' + esc(e.message) + '</div></div>';
+    if ($('#recent')) $('#recent').innerHTML = msg;
+    if ($('#hnews')) $('#hnews').innerHTML = '';
+  });
 }
 function openHistoryItem(id) {
   var m = modal('جارٍ التحميل...', '<div class="skeleton"><div></div><div></div><div></div></div>');

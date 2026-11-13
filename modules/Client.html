@@ -132,35 +132,6 @@ function logoutLocal() {
   renderAuth();
 }
 
-/** شبكة المربعات التفاعلية (مثل موقع Full Speed): مربعات تضيء عشوائياً، وتتفاعل مع حركة الماوس. */
-function mountCells(host, opts) {
-  opts = opts || {};
-  var size = opts.size || 78, box = host.getBoundingClientRect();
-  var cols = Math.ceil((box.width || window.innerWidth) / size) + 1, rows = Math.ceil((box.height || window.innerHeight) / size) + 1;
-  var n = Math.min(cols * rows, 420), html = '';
-  for (var i = 0; i < n; i++) html += '<i></i>';
-  var g = document.createElement('div');
-  g.className = 'cells'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = html;
-  host.insertBefore(g, host.firstChild);
-  var cells = g.children, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var timer = setInterval(function () {
-    if (!document.body.contains(g)) { clearInterval(timer); return; }
-    var c = cells[Math.floor(Math.random() * cells.length)];
-    var logoCell = Math.random() < 0.18;
-    c.classList.add('lit');
-    if (logoCell) { c.classList.add('logo-cell'); c.style.backgroundImage = 'url(' + LOGO_IMG + ')'; }
-    setTimeout(function () { c.classList.remove('lit', 'logo-cell'); c.style.backgroundImage = ''; }, reduce ? 2600 : 1900);
-  }, reduce ? 1500 : 420);
-  if (!reduce) g.parentNode.addEventListener('pointermove', function (e) {
-    var el = document.elementFromPoint(e.clientX, e.clientY);
-    if (el && el.parentNode === g && !el.classList.contains('hot')) {
-      el.classList.add('hot');
-      setTimeout(function () { el.classList.remove('hot'); }, 380);
-    }
-  });
-  return g;
-}
-
 var TYPER_LINES = ['موظف غاب 3 أيام بدون إذن… ما الجزاء؟', 'كيف أحسب الأجر الإضافي في يوم الراحة؟', 'ما الحد الأقصى للخصم من المرتب؟',
   'مدة إجازة الوضع للموظفة كام يوم؟', 'نسبة اشتراك التأمينات على صاحب العمل؟'];
 function startTyper(el) {
@@ -189,7 +160,6 @@ function authLayout(inner) {
 }
 function mountAuth(inner) {
   $('#root').innerHTML = authLayout(inner);
-  mountCells($('#auth'));
   startTyper($('#typer'));
   bindTheme();
 }
@@ -481,14 +451,13 @@ function viewHome(v) {
     '<button class="btn accent">' + ic('send') + 'اسأل</button></form></section>' +
     '<div class="grid g4 stagger" id="stats">' +
     [['book', 'مادة قانونية متاحة', 'articles'], ['scale', 'مخالفة في لائحة الجزاءات', 'violations'], ['ask', 'سؤال ليك الشهر ده', 'myMonth'], ['star', 'مادة في المفضلة', 'favorites']]
-      .map(function (s, i) { return '<div class="card stat" style="--i:' + i + '"><div class="ic">' + ic(s[0]) + '</div><div class="v num" data-k="' + s[2] + '">0</div><div class="l">' + s[1] + '</div></div>'; }).join('') +
+      .map(function (s, i) { return '<div class="card stat" style="--i:' + i + '"><div class="ic">' + ic(s[0]) + '</div><div class="v num" data-k="' + s[2] + '">–</div><div class="l">' + s[1] + '</div></div>'; }).join('') +
     '</div><div class="grid g4 stagger">' +
     [['ask', 'اسأل المستشار', 'سؤال أو حالة عملية بالتفصيل', 'ask'], ['scale', 'احسب جزاء', 'معالج بخطوات: المخالفة، التكرار، المواعيد', 'penalties'],
      ['file', 'اعمل مستند', 'إخطار، محضر تحقيق، قرار جزاء، إنذار', 'docs'], ['calc', 'الحاسبات', 'الإضافي، الخصم، التأمينات، الضريبة', 'calc']]
       .map(function (q, i) { return '<div class="card quick lift" style="--i:' + (i + 4) + '" data-goto="' + q[3] + '"><div class="ic">' + ic(q[0]) + '</div><h3>' + q[1] + '</h3><p>' + q[2] + '</p></div>'; }).join('') +
     '</div><div class="dash-grid"><div class="card"><div class="card-head"><h2>' + ic('clock') + ' آخر أسئلتك</h2><span class="spacer"></span><button class="btn ghost sm" data-goto="history">الكل</button></div><div id="recent"><div class="skeleton"><div></div><div></div></div></div></div>' +
     '<div class="card"><div class="card-head"><h2>' + ic('bell') + ' إيه الجديد</h2></div><div id="hnews"><div class="skeleton"><div></div><div></div></div></div></div></div>';
-  mountCells($('#hero'), { size: 64 });
   $('#hask').addEventListener('submit', function (e) { e.preventDefault(); go('ask', { q: $('#hq').value.trim(), send: !!$('#hq').value.trim() }); });
   $$('[data-goto]', v).forEach(function (c) { c.addEventListener('click', function () { go(c.dataset.goto); }); });
   api('dash').then(function (d) {
@@ -501,7 +470,11 @@ function viewHome(v) {
     $('#hnews').innerHTML = renderNews(d.news, 6);
     bindNewsLinks($('#hnews'));
     if (!d.ai && isAdmin()) $('#hero').insertAdjacentHTML('beforeend', '<div class="alert warn" style="margin-top:16px;max-width:640px">' + ic('info') + '<div>مفيش مفتاح Gemini، فالبرنامج شغال في وضع البحث بس. ضيف المفتاح من الإدارة.</div></div>');
-  }).catch(function (e) { toast(e.message, true); });
+  }).catch(function (e) {
+    var msg = '<div class="alert bad">' + ic('alert') + '<div>' + esc(e.message) + '</div></div>';
+    if ($('#recent')) $('#recent').innerHTML = msg;
+    if ($('#hnews')) $('#hnews').innerHTML = '';
+  });
 }
 function openHistoryItem(id) {
   var m = modal('جارٍ التحميل...', '<div class="skeleton"><div></div><div></div><div></div></div>');
