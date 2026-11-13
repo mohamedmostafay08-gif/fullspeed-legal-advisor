@@ -1,0 +1,10 @@
+# ملفات البيانات خاصة (لائحة الجزاءات غير قابلة للتداول) — لا تُرفع على GitHub
+data/
+dist/
+*.json
+!docs/manifest.webmanifest
+*.xlsx
+*.pdf
+node_modules/
+__pycache__/
+screens/

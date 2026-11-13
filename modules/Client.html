@@ -1,0 +1,1058 @@
+<script>
+/* =========================================================================
+   المستشار القانوني — واجهة التطبيق (صفحة واحدة)
+   ========================================================================= */
+(function () {
+'use strict';
+
+// ---------------- أدوات ----------------
+var $ = function (s, el) { return (el || document).querySelector(s); };
+var $$ = function (s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); };
+function esc(s) {
+  return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function fmt(n) { return Number(n).toLocaleString('ar-EG', { maximumFractionDigits: 2 }); }
+
+var ICONS = {
+  ask: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>',
+  scale: '<path d="M12 3v18M5 7h14M8 21h8"/><path d="M5 7l-3 7a3 3 0 0 0 6 0L5 7zM19 7l-3 7a3 3 0 0 0 6 0l-3-7z"/>',
+  calc: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+  book: '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  admin: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  more: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  alert: '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+  ext: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M17 6l3 3M15 8l2 2"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'
+};
+function ic(name, cls) { return '<svg class="i ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>'; }
+
+var LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M3 8h6M2 12h5M3 16h6"/><path d="M11 6l7 6-7 6"/><path d="M15 6l7 6-7 6" opacity=".55"/></svg>';
+// توقيع المطوّر (يظهر في شاشة الدخول وأسفل القائمة وأسفل كل صفحة على الموبايل)
+var CREDIT = '<div class="credit"><span>Powered by <b>Mohamed Mostafa</b></span><a href="tel:+201120339097">01120339097</a></div>';
+
+function logo(sub) {
+  return '<div class="logo"><div class="logo-mark">' + LOGO_SVG + '</div><div class="logo-text"><b>' + esc(window.COMPANY || 'Full Speed') +
+         '</b><span>' + esc(sub || 'المستشار القانوني') + '</span></div></div>';
+}
+
+// ---------------- الاتصال بالخادم ----------------
+var state = { token: null, user: null, view: 'ask', sources: {}, session: [] };
+try { state.token = localStorage.getItem('fs_token'); } catch (e) { /* تخزين غير متاح */ }
+
+// داخل رابط Apps Script نستخدم google.script.run، وفي التطبيق المستقل (GitHub Pages) نكلم doPost
+var API_URL = window.FS_API_URL || '';
+var IS_GAS = typeof google !== 'undefined' && !!(google.script && google.script.run);
+var IS_APP = !IS_GAS && !!API_URL;
+
+function api(action, data) {
+  return new Promise(function (resolve, reject) {
+    var req = { action: action, token: state.token, data: data || {} };
+    var done = function (res) {
+      if (!res) return reject(new Error('لا يوجد رد من الخادم'));
+      if (res.ok) return resolve(res.data);
+      if (res.auth === false) { logoutLocal(); }
+      reject(new Error(res.error || 'حدث خطأ'));
+    };
+    if (IS_GAS) {
+      google.script.run.withSuccessHandler(done)
+        .withFailureHandler(function (err) { reject(new Error((err && err.message) || 'تعذر الاتصال بالخادم')); })
+        .api(req);
+      return;
+    }
+    if (!API_URL) return reject(new Error('رابط السيرفر غير مضبوط في config.js'));
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 330000);
+    // بدون Content-Type حتى لا يرسل المتصفح طلب preflight (Apps Script لا يرد عليه)
+    fetch(API_URL, { method: 'POST', body: JSON.stringify(req), redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (res) { clearTimeout(timer); done(res); })
+      .catch(function (err) {
+        clearTimeout(timer);
+        reject(new Error(navigator.onLine === false ? 'لا يوجد اتصال بالإنترنت' : 'تعذر الاتصال بالخادم، حاول مرة أخرى'));
+      });
+  });
+}
+if (IS_APP && 'serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+
+function toast(msg, bad) {
+  $$('.toast').forEach(function (old) { old.parentNode.removeChild(old); }); // إشعار واحد في كل مرة
+  var t = document.createElement('div');
+  t.className = 'toast' + (bad ? ' bad' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function () { t.remove(); }, 3800);
+}
+
+function modal(title, bodyHtml, footHtml) {
+  var bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><div class="modal-h"><h3>' + esc(title) + '</h3>' +
+    '<button class="x" data-close aria-label="إغلاق">' + ic('x') + '</button></div><div class="modal-b">' + bodyHtml + '</div>' +
+    (footHtml ? '<div class="modal-f">' + footHtml + '</div>' : '') + '</div>';
+  // النوافذ التي فيها نماذج (data-sticky) لا تُغلق بالضغط خارجها حتى لا يضيع المكتوب
+  bg.addEventListener('click', function (e) { if ((e.target === bg && !bg.dataset.sticky) || e.target.closest('[data-close]')) bg.remove(); });
+  document.body.appendChild(bg);
+  return bg;
+}
+
+// ---------------- الدخول ----------------
+function logoutLocal() {
+  state.token = null; state.user = null;
+  try { localStorage.removeItem('fs_token'); } catch (e) {}
+  renderAuth();
+}
+
+function authLayout(inner) {
+  return '<div class="auth"><section class="auth-hero">' + logo('المستشار القانوني الداخلي') +
+    '<div><h1>إجابات قانونية دقيقة<br>من نصوص القانون مباشرة</h1>' +
+    '<p>قانون العمل 14 لسنة 2025، قانون التأمينات 148 لسنة 2019، تعديلات ضريبة الدخل، ولائحتا تنظيم العمل والجزاءات.</p>' +
+    '<div class="auth-points"><div>' + ic('check') + 'كل مادة تُذكر تُراجع آلياً مقابل النص الأصلي</div>' +
+    '<div>' + ic('scale') + 'مساعد جزاءات بالمواعيد والقيود القانونية</div>' +
+    '<div>' + ic('file') + 'مستندات تحقيق وجزاء جاهزة للتوقيع</div></div></div>' +
+    '<svg class="speed" width="420" height="160" viewBox="0 0 420 160" fill="none" stroke="#FF6B1A" stroke-width="10" stroke-linecap="round">' +
+    '<path d="M20 40h220M60 80h260M20 120h200"/></svg>' +
+    '<div><div class="small" style="color:#9FB3CC">أداة مساعدة داخلية لا تغني عن الاستشارة القانونية المتخصصة في الحالات محل النزاع.</div>' + CREDIT + '</div>' +
+    '</section><section class="auth-form"><div class="auth-card">' + inner + '</div></section></div>';
+}
+
+function renderAuth() {
+  $('#root').innerHTML = authLayout('<div class="empty"><div class="spin" style="margin:auto"></div></div>');
+  api('auth.status').then(function (s) {
+    if (s.company) window.COMPANY = s.company;
+    if (!s.hasUsers) return renderSetup(s.hasData);
+    $('#root').innerHTML = authLayout(
+      '<h2>تسجيل الدخول</h2><div class="sub">ادخل باسم المستخدم وكلمة المرور التي أعطاها لك مدير النظام.</div>' +
+      '<form id="login"><div class="field"><label class="lbl" for="u">اسم المستخدم</label><input class="input" id="u" autocomplete="username" required dir="ltr"></div>' +
+      '<div class="field"><label class="lbl" for="p">كلمة المرور</label><input class="input" id="p" type="password" autocomplete="current-password" required dir="ltr"></div>' +
+      '<div id="err"></div><button class="btn accent block" id="go">دخول</button></form>');
+    $('#login').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var b = $('#go'); b.disabled = true; b.textContent = 'جارٍ الدخول...';
+      api('auth.login', { username: $('#u').value, password: $('#p').value }).then(function (r) {
+        state.token = r.token; state.user = r.user;
+        try { localStorage.setItem('fs_token', r.token); } catch (e2) {}
+        renderShell();
+      }).catch(function (err) {
+        $('#err').innerHTML = '<div class="alert bad">' + ic('alert') + esc(err.message) + '</div>';
+        b.disabled = false; b.textContent = 'دخول';
+      });
+    });
+  }).catch(function (err) {
+    $('#root').innerHTML = authLayout('<div class="alert bad">' + ic('alert') + esc(err.message) + '</div>');
+  });
+}
+
+/** يقرأ ملف البيانات من جهاز المستخدم ويرفعه على أجزاء صغيرة. */
+function uploadDataFile(file, action, extra, onProgress) {
+  return new Promise(function (resolve, reject) {
+    if (!file) return reject(new Error('اختر ملف البيانات FullSpeed_Legal_Data.json'));
+    if (!/\.json$/i.test(file.name)) return reject(new Error('ملف البيانات يجب أن يكون FullSpeed_Legal_Data.json'));
+    var reader = new FileReader();
+    reader.onerror = function () { reject(new Error('تعذرت قراءة الملف')); };
+    reader.onload = function () { uploadChunks(String(reader.result), action, extra, onProgress).then(resolve, reject); };
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+function renderSetup(hasData) {
+  $('#root').innerHTML = authLayout(
+    '<h2>الإعداد الأول</h2><div class="sub">إنشاء حساب مدير النظام وتثبيت القوانين. تحتاج "كود الإعداد" الذي يظهر عند تشغيل الدالة createSetupCode من محرر Apps Script.</div>' +
+    '<form id="setup"><div class="field"><label class="lbl">كود الإعداد</label><input class="input" id="sc" required dir="ltr"></div>' +
+    '<div class="field"><label class="lbl">ملف البيانات (القوانين واللوائح)</label><input class="input" id="df" type="file" accept=".json"' + (hasData ? '' : ' required') + '>' +
+    '<div class="hint">' + (hasData ? 'البيانات مثبتة بالفعل؛ اختر الملف فقط إذا أردت استبدالها.' : 'اختر الملف FullSpeed_Legal_Data.json من الحزمة.') + '</div></div>' +
+    '<div class="field"><label class="lbl">الاسم الكامل</label><input class="input" id="fn" required></div>' +
+    '<div class="field"><label class="lbl">اسم المستخدم (إنجليزي)</label><input class="input" id="su" required dir="ltr"></div>' +
+    '<div class="field"><label class="lbl">كلمة المرور (8 أحرف على الأقل، أرقام وحروف)</label><input class="input" id="sp" type="password" required dir="ltr"></div>' +
+    '<div id="err"></div><button class="btn accent block" id="go">تثبيت وإنشاء الحساب</button></form>');
+  $('#setup').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var b = $('#go'); b.disabled = true;
+    var code = $('#sc').value, file = $('#df').files[0];
+    var step = file
+      ? uploadDataFile(file, 'setup.upload', { setupCode: code }, function (i, n) { b.textContent = 'جارٍ رفع البيانات ' + Math.round(i / n * 100) + '%'; })
+      : Promise.resolve(0);
+    step.then(function (parts) {
+      b.textContent = 'جارٍ تثبيت القوانين وإنشاء الحساب...';
+      return api('auth.setup', { setupCode: code, fullName: $('#fn').value, username: $('#su').value, password: $('#sp').value, dataParts: parts || undefined });
+    }).then(function (r) {
+      toast(r.imported ? 'تم تثبيت ' + r.imported.articles + ' مادة و' + r.imported.penalties + ' صف جزاءات. سجّل الدخول الآن' : 'تم إنشاء حساب المدير، سجّل الدخول الآن');
+      renderAuth();
+    }).catch(function (err) {
+      $('#err').innerHTML = '<div class="alert bad">' + ic('alert') + esc(err.message) + '</div>';
+      b.disabled = false; b.textContent = 'تثبيت وإنشاء الحساب';
+    });
+  });
+}
+
+// ---------------- هيكل التطبيق ----------------
+var VIEWS = [
+  ['ask', 'اسأل المستشار', 'ask'], ['penalties', 'مساعد الجزاءات', 'scale'], ['calc', 'الحاسبات', 'calc'],
+  ['docs', 'المستندات', 'file'], ['laws', 'القوانين واللوائح', 'book'], ['history', 'سجل الأسئلة', 'clock'], ['admin', 'الإدارة', 'admin']
+];
+function viewTitle(v) { for (var i = 0; i < VIEWS.length; i++) if (VIEWS[i][0] === v) return VIEWS[i][1]; return ''; }
+
+function renderShell() {
+  var u = state.user;
+  var nav = VIEWS.filter(function (v) { return v[0] !== 'admin' || u.role === 'admin'; }).map(function (v) {
+    return '<a data-view="' + v[0] + '">' + ic(v[2]) + '<span>' + v[1] + '</span></a>';
+  }).join('');
+  var bottom = [['ask', 'اسأل', 'ask'], ['penalties', 'الجزاءات', 'scale'], ['calc', 'الحاسبات', 'calc'], ['docs', 'المستندات', 'file'], ['more', 'المزيد', 'more']]
+    .map(function (v) { return '<a data-view="' + v[0] + '">' + ic(v[2]) + '<span>' + v[1] + '</span></a>'; }).join('');
+  $('#root').innerHTML =
+    '<div class="shell"><aside class="sidebar">' + logo() + '<nav class="nav">' + nav + '</nav>' +
+    '<div class="side-foot"><div class="me"><div class="avatar">' + esc(u.full_name.trim().charAt(0)) + '</div><div><b>' + esc(u.full_name) +
+    '</b><span>' + (u.role === 'admin' ? 'مدير النظام' : 'مستخدم') + '</span></div></div>' +
+    '<a data-act="password">' + ic('key') + 'تغيير كلمة المرور</a><a data-act="logout">' + ic('logout') + 'تسجيل الخروج</a>' + CREDIT + '</div></aside>' +
+    '<div class="main"><header class="topbar"><div class="mob-logo">' + logo() + '</div><div class="title-wrap"><h1 id="vt"></h1>' +
+    '<div class="crumb">' + esc(window.COMPANY) + ' · المستشار القانوني</div></div></header>' +
+    '<main class="content"><div class="page-title" id="vt2"></div><div id="view"></div><div class="page-credit">' + CREDIT + '</div></main></div>' +
+    '<nav class="bottomnav">' + bottom + '</nav></div>';
+  $$('[data-view]').forEach(function (a) {
+    a.addEventListener('click', function () { a.dataset.view === 'more' ? moreMenu() : go(a.dataset.view); });
+  });
+  $$('[data-act]').forEach(function (a) {
+    a.addEventListener('click', function () { a.dataset.act === 'logout' ? doLogout() : changePassword(); });
+  });
+  api('kb.sources').then(function (list) {
+    list.forEach(function (s) { state.sources[s.id] = s; });
+  }).catch(function () {});
+  go(state.view || 'ask');
+}
+
+function moreMenu() {
+  var items = [['laws', 'القوانين واللوائح', 'book'], ['history', 'سجل الأسئلة', 'clock']];
+  if (state.user.role === 'admin') items.push(['admin', 'الإدارة', 'admin']);
+  var html = '<div class="sheet-menu">' + items.map(function (i) { return '<a data-go="' + i[0] + '">' + ic(i[2]) + i[1] + '</a>'; }).join('') +
+    '<a data-go="password">' + ic('key') + 'تغيير كلمة المرور</a><a data-go="logout">' + ic('logout') + 'تسجيل الخروج</a></div>';
+  var m = modal(state.user.full_name, html);
+  $$('[data-go]', m).forEach(function (a) {
+    a.addEventListener('click', function () {
+      m.remove();
+      var g = a.dataset.go;
+      if (g === 'logout') doLogout(); else if (g === 'password') changePassword(); else go(g);
+    });
+  });
+}
+
+function doLogout() {
+  api('auth.logout').catch(function () {}).then(logoutLocal);
+}
+
+function changePassword() {
+  var m = modal('تغيير كلمة المرور',
+    '<div class="field"><label class="lbl">كلمة المرور الحالية</label><input class="input" id="op" type="password" dir="ltr"></div>' +
+    '<div class="field"><label class="lbl">كلمة المرور الجديدة (8 أحرف على الأقل، أرقام وحروف)</label><input class="input" id="np" type="password" dir="ltr"></div>',
+    '<button class="btn accent" id="save">حفظ</button>');
+  $('#save', m).addEventListener('click', function () {
+    api('auth.changePassword', { oldPassword: $('#op', m).value, newPassword: $('#np', m).value })
+      .then(function () { m.remove(); toast('تم تغيير كلمة المرور'); }).catch(function (e) { toast(e.message, true); });
+  });
+}
+
+function go(view) {
+  state.view = view;
+  $$('[data-view]').forEach(function (a) {
+    var on = a.dataset.view === view || (a.dataset.view === 'more' && ['laws', 'history', 'admin'].indexOf(view) >= 0);
+    a.classList.toggle('active', on);
+  });
+  $('#vt').textContent = viewTitle(view);
+  $('#vt2').textContent = viewTitle(view);
+  var v = $('#view');
+  v.innerHTML = '';
+  window.scrollTo(0, 0);
+  ({ ask: viewAsk, penalties: viewPenalties, calc: viewCalc, docs: viewDocs, laws: viewLaws, history: viewHistory, admin: viewAdmin }[view])(v);
+}
+
+// ---------------- عرض المواد ----------------
+function srcShort(id) { return (state.sources[id] && state.sources[id].short) || id; }
+function refChip(source, article) {
+  var label = source === 'penreg' ? 'مخالفة ' + article : 'مادة ' + article;
+  return '<span class="chip" data-src="' + esc(source) + '" data-num="' + esc(article) + '">' + ic('book') + esc(label) + ' · ' + esc(srcShort(source)) + '</span>';
+}
+document.addEventListener('click', function (e) {
+  var c = e.target.closest && e.target.closest('.chip[data-src]');
+  if (c) showArticle(c.dataset.src, c.dataset.num);
+});
+function showArticle(source, num) {
+  var m = modal('جارٍ التحميل...', '<div class="skeleton"><div></div><div></div><div style="width:60%"></div></div>');
+  api('kb.article', { source: source, num: num }).then(function (a) {
+    $('.modal-h h3', m).textContent = a.label + ' — ' + a.source_short;
+    var note = (a.num !== String(num).trim() && a.also && a.also.length)
+      ? '<div class="alert warn">' + ic('info') + 'نص المادة ' + esc(num) + ' مدمج داخل هذا الجزء لأن عنوانها لم يُقرأ آلياً من النسخة الممسوحة.</div>' : '';
+    $('.modal-b', m).innerHTML = note + (a.chapter ? '<div class="muted small" style="margin-bottom:8px">' + esc(a.chapter) + '</div>' : '') + esc(a.text);
+    if (a.pdfUrl) {
+      var f = document.createElement('div'); f.className = 'modal-f';
+      f.innerHTML = '<a class="btn soft sm" target="_blank" rel="noopener" href="' + esc(a.pdfUrl) + '">' + ic('ext') + 'الملف الأصلي' + (a.page ? ' (صفحة ' + a.page + ')' : '') + '</a>';
+      $('.modal', m).appendChild(f);
+    }
+  }).catch(function (e) { $('.modal-h h3', m).textContent = 'غير موجود'; $('.modal-b', m).textContent = e.message; });
+}
+
+function md(text) {
+  var lines = esc(text).split('\n'), html = '', inList = false;
+  lines.forEach(function (line) {
+    line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    var m = line.match(/^\s*(?:[-*•]|\d+[.)-])\s+(.*)$/);
+    if (m) { if (!inList) { html += '<ul>'; inList = true; } html += '<li>' + m[1] + '</li>'; }
+    else { if (inList) { html += '</ul>'; inList = false; } if (line.trim()) html += '<p>' + line + '</p>'; }
+  });
+  if (inList) html += '</ul>';
+  return '<div class="md">' + html + '</div>';
+}
+function alerts(list, cls) {
+  return (list || []).map(function (t) { return '<div class="alert ' + cls + '">' + ic(cls === 'info' ? 'info' : 'alert') + '<div>' + esc(t) + '</div></div>'; }).join('');
+}
+
+// ---------------- حماية البيانات الشخصية (تنبيه قبل الإرسال) ----------------
+var COMMON_NAMES = ('محمد احمد محمود مصطفى علي ابراهيم عمر خالد ياسر طارق هشام وليد عمرو شريف ايمن اشرف حازم تامر رامي سامح شادي ' +
+  'كمال جمال حسام عصام هاني ماجد مجدي ممدوح مدحت نبيل وائل يوسف يحيى زياد عبدالله عبدالرحمن عبدالعزيز عبدالحميد سيد السيد ' +
+  'فاطمه مريم ساره سلمى منى مها هبه ياسمين دينا رانيا شيماء ايمان اسماء نهى غاده ريهام نرمين ايه اميره هاله سمر ندى رحاب').split(' ');
+var TITLE_RE = /(?:الموظف|الموظفه|الموظفة|العامل|العامله|العاملة|الزميل|الزميله|الزميلة|زميلنا|زميلتنا|الاستاذ|الأستاذ|الاستاذه|الأستاذة|السيد|السيده|السيدة|المهندس|المهندسه|المهندسة|المدعو|المدعوه|المدعوة|اسمه|اسمها|أ\/|ا\/|م\/)\s+([ء-ي]{3,})(?:\s+([ء-ي]{3,}))?/g;
+var NOT_NAME = ('غاب تاخر تأخر اتأخر رفض مشي ترك تغيب اتغيب تغيبت غابت عمل بيعمل يعمل كان قام جه جاء اخد أخذ سرق كسر طلب عايز يريد ' +
+  'المسؤول المختص الجديد القديم المذكور المخالف الذي اللي التي في من على عن بعد قبل لم لا').split(' ');
+
+function normAr(s) { return s.replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي'); }
+
+function scanSensitive(text) {
+  var hits = [];
+  var t = text.replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 0x660); });
+  var rules = [
+    ['رقم قومي', /(^|[^\d])([23]\d{13})(?!\d)/g],
+    ['رقم هاتف', /(^|[^\d])((?:\+?20|0020)?\s?0?1[0125][\s-]?\d{3,4}[\s-]?\d{4})(?!\d)/g],
+    ['بريد إلكتروني', /()([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g],
+    ['رقم حساب أو رقم طويل', /(^|[^\d])(\d{10,})(?!\d)/g]
+  ];
+  rules.forEach(function (r) {
+    var m; while ((m = r[1].exec(t))) hits.push({ type: r[0], value: m[2], strong: true });
+  });
+  var m2;
+  while ((m2 = TITLE_RE.exec(text))) {
+    var w1 = m2[1], w2 = m2[2] || '';
+    if (NOT_NAME.indexOf(normAr(w1)) >= 0 || NOT_NAME.indexOf(w1) >= 0) continue;
+    var val = w1 + (w2 && NOT_NAME.indexOf(w2) < 0 ? ' ' + w2 : '');
+    hits.push({ type: 'اسم شخص محتمل', value: val, strong: false });
+  }
+  (text.match(/[ء-ي]{3,}/g) || []).forEach(function (w) {
+    if (COMMON_NAMES.indexOf(normAr(w)) >= 0 && !hits.some(function (h) { return h.value.indexOf(w) >= 0; })) {
+      hits.push({ type: 'اسم شخص محتمل', value: w, strong: false });
+    }
+  });
+  var seen = {};
+  return hits.filter(function (h) { var k = h.type + h.value; if (seen[k]) return false; seen[k] = 1; return true; });
+}
+
+function redactText(text, hits) {
+  var t = text.replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 0x660); });
+  hits.forEach(function (h) {
+    var rep = h.strong ? '[' + h.type + ' محذوف]' : '[اسم]';
+    t = t.split(h.value).join(rep);
+  });
+  return t;
+}
+
+function privacyGate(text) {
+  return new Promise(function (resolve) {
+    var hits = scanSensitive(text);
+    if (!hits.length) return resolve(text);
+    var marked = esc(text);
+    hits.forEach(function (h) { marked = marked.split(esc(h.value)).join('<mark class="pii">' + esc(h.value) + '</mark>'); });
+    var onlyNames = hits.every(function (h) { return !h.strong; });
+    var m = modal('تنبيه: بيانات شخصية في السؤال',
+      '<div class="alert warn">' + ic('shield') + '<div>الأسئلة تُرسل لخدمة Google Gemini المجانية، وقد تستخدم Google ما يُرسل إليها لتحسين خدماتها. ' +
+      'لا تُرسل أسماء الموظفين أو أرقامهم القومية أو هواتفهم؛ السؤال يُفهم بنفس الدقة بدونها.</div></div>' +
+      '<div class="small muted" style="margin:8px 0 4px">تم العثور على:</div><div>' +
+      hits.map(function (h) { return '<span class="badge b-warn" style="margin:2px">' + esc(h.type) + ': ' + esc(h.value) + '</span>'; }).join('') +
+      '</div><div class="quote" style="border-inline-start-color:var(--warn);margin-top:12px">' + marked + '</div>',
+      '<button class="btn accent" data-a="redact">احذفها وأرسل</button><button class="btn ghost" data-a="edit">تعديل السؤال</button>' +
+      (onlyNames ? '<button class="btn ghost" data-a="send">ليست أسماء أشخاص، أرسل</button>' : ''));
+    $$('[data-a]', m).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var a = b.dataset.a; m.remove();
+        if (a === 'redact') resolve(redactText(text, hits));
+        else if (a === 'send') resolve(text);
+        else resolve(null);
+      });
+    });
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.closest('[data-close]')) resolve(null); });
+  });
+}
+
+// ---------------- اسأل ----------------
+var SUGGESTIONS = ['موظف غاب 3 أيام بدون إذن، ما الجزاء وهل يجوز فصله؟', 'ما الحد الأقصى للخصم من الأجر في الشهر؟',
+  'كيف يُحسب الأجر الإضافي في يوم الراحة؟', 'موظف كسر لابتوب الشركة، هل نخصم ثمنه من مرتبه؟', 'ما مدة إجازة الوضع للموظفة؟'];
+
+function viewAsk(v) {
+  v.innerHTML =
+    '<div class="card ask-hero"><div class="row"><h2>اسأل المستشار القانوني</h2><span class="spacer"></span>' +
+    '<div class="seg" id="mode"><button class="on" data-m="question">سؤال</button><button data-m="case">حالة عملية</button></div></div>' +
+    '<div class="muted small" style="margin-top:6px">الإجابة من النصوص القانونية المتاحة فقط، مع رقم المادة والتحقق الآلي من كل اقتباس.</div>' +
+    '<textarea class="input" id="q" rows="4" placeholder="اكتب سؤالك أو الحالة... مثال: موظف في الحسابات تأخر ساعة ونصف للمرة الثانية هذا الشهر، ما الجزاء؟"></textarea>' +
+    '<div class="privacy">' + ic('shield') + '<div><b>لا تكتب أسماء أو أرقاماً قومية أو هواتف.</b> اكتب "موظف في المخازن" بدل اسمه؛ البرنامج يحذف الأرقام الحساسة تلقائياً وينبهك للأسماء.</div></div>' +
+    '<div class="row" style="margin-top:12px"><label class="small" style="display:flex;gap:6px;align-items:center;color:#C9D6E8;cursor:pointer">' +
+    '<input type="checkbox" id="follow"> متابعة على الأسئلة السابقة</label><span class="spacer"></span>' +
+    '<button class="btn accent" id="send">' + ic('send') + 'اسأل</button></div>' +
+    '<div class="suggs">' + SUGGESTIONS.map(function (s) { return '<span class="chip sugg">' + esc(s) + '</span>'; }).join('') + '</div></div>' +
+    '<div id="answers"></div>';
+  var mode = 'question';
+  $$('#mode button', v).forEach(function (b) {
+    b.addEventListener('click', function () { mode = b.dataset.m; $$('#mode button', v).forEach(function (x) { x.classList.toggle('on', x === b); }); });
+  });
+  $$('.chip.sugg', v).forEach(function (c) { c.addEventListener('click', function () { $('#q').value = c.textContent; $('#q').focus(); }); });
+  $('#send').addEventListener('click', function () { submitQuestion(mode); });
+  $('#q').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitQuestion(mode); });
+  state.session.slice().reverse().forEach(function (r) { $('#answers').insertAdjacentHTML('beforeend', renderAnswer(r)); });
+}
+
+function submitQuestion(mode) {
+  var raw = $('#q').value.trim();
+  if (raw.length < 5) { toast('اكتب السؤال بتفصيل أكثر', true); return; }
+  privacyGate(raw).then(function (text) {
+    if (text === null) { $('#q').focus(); return; }
+    var btn = $('#send'); btn.disabled = true;
+    var box = document.createElement('div');
+    box.className = 'card';
+    box.innerHTML = '<div class="loading-line"><div class="spin"></div>جارٍ مراجعة النصوص القانونية وصياغة الإجابة...</div>' +
+      '<div class="skeleton"><div></div><div style="width:85%"></div><div style="width:70%"></div></div>';
+    $('#answers').prepend(box);
+    var history = $('#follow').checked ? state.session.slice(-3).map(function (r) { return { question: r.question, summary: r.answer.summary }; }) : [];
+    api('ask', { question: text, mode: mode, history: history }).then(function (r) {
+      state.session.push(r);
+      box.outerHTML = renderAnswer(r);
+      $('#q').value = '';
+    }).catch(function (e) {
+      box.innerHTML = '<div class="alert bad">' + ic('alert') + esc(e.message) + '</div>';
+    }).then(function () { btn.disabled = false; });
+  });
+}
+
+var CONF = { explicit: ['نص صريح', 'b-ok'], inferred: ['استنتاج من نصوص عامة', 'b-warn'], needs_lawyer: ['يحتاج مراجعة محامٍ', 'b-bad'] };
+var CHECK = { ok: ['الاقتباس مطابق للنص', 'b-ok'], partial: ['مطابق جزئياً', 'b-warn'], mismatch: ['الاقتباس لا يطابق النص', 'b-bad'], missing: ['المادة غير موجودة', 'b-bad'] };
+
+function renderAnswer(r) {
+  var a = r.answer, ver = r.verification || { checks: [] };
+  var chk = function (s, n, cross) {
+    for (var i = 0; i < ver.checks.length; i++) {
+      var c = ver.checks[i];
+      if (c.source === s && String(c.article) === String(n) && !!c.cross === !!cross) return c;
+    }
+    return {};
+  };
+  var conf = CONF[a.confidence] || ['', 'b-info'];
+  var h = '<div class="card answer" data-id="' + esc(r.id) + '"><div class="q">' + ic('ask') + ' ' + esc(r.question) + '</div><div class="row">';
+  if (r.provider === 'search') h += '<span class="badge b-info">' + ic('search') + 'وضع البحث فقط</span>';
+  else h += '<span class="badge ' + conf[1] + '">' + conf[0] + '</span>';
+  h += ver.all_ok ? '<span class="badge b-ok">' + ic('check') + 'كل المراجع تم التحقق منها</span>'
+                  : '<span class="badge b-bad">' + ic('alert') + ver.problems + ' مرجع لم يتطابق — راجع قبل الاعتماد</span>';
+  if (!a.found) h += '<span class="badge b-warn">لا يوجد نص صريح في المراجع المتاحة</span>';
+  h += '</div>';
+  if (r.notice) h += '<div class="alert warn">' + ic('info') + '<div>' + esc(r.notice) + '</div></div>';
+  if (r.redactions && r.redactions.length) h += '<div class="alert info">' + ic('shield') + '<div>تم حذف بيانات حساسة من السؤال تلقائياً قبل إرساله.</div></div>';
+  h += '<div class="summary">' + esc(a.summary) + '</div>';
+
+  h += '<div class="sec"><div class="sec-t"><span class="n">1</span>النص القانوني والمادة المرجعية</div>';
+  if (!(a.legal_texts || []).length) h += '<div class="muted">لم يُعثر على نص مباشر في المراجع المتاحة.</div>';
+  (a.legal_texts || []).forEach(function (t) {
+    var c = CHECK[chk(t.source, t.article, false).status] || ['', 'b-info'];
+    h += '<div class="quote"><div class="meta">' + refChip(t.source, t.article) + '<span class="badge ' + c[1] + '">' + c[0] + '</span></div>' +
+         esc(t.quote) + '<div class="why">' + esc(t.relevance) + '</div></div>';
+  });
+  h += '</div>';
+  if (r.provider !== 'search' || a.explanation) h += '<div class="sec"><div class="sec-t"><span class="n">2</span>التفسير المبسط والتطبيقي</div>' + md(a.explanation) + '</div>';
+  if (r.provider !== 'search') {
+    h += '<div class="sec"><div class="sec-t"><span class="n">3</span>التقاطع مع القوانين الأخرى</div>';
+    if (!(a.cross_law || []).length) h += '<div class="muted">لا يوجد في المراجع المتاحة نص مرتبط مباشرة من القوانين الأخرى.</div>';
+    (a.cross_law || []).forEach(function (x) {
+      var c = chk(x.source, x.article, true);
+      h += '<div style="margin-bottom:8px">' + refChip(x.source, x.article) + (c.status === 'missing' ? '<span class="badge b-bad">غير موجودة</span>' : '') + ' ' + esc(x.note) + '</div>';
+    });
+    h += '</div><div class="sec"><div class="sec-t"><span class="n">4</span>أمثلة عملية</div><div class="examples">' +
+      (a.examples || []).map(function (e) {
+        return '<div class="example"><h4>' + esc(e.title) + '</h4><div class="small">' + esc(e.scenario) + '</div><div class="out"><b>النتيجة:</b> ' + esc(e.outcome) + '</div></div>';
+      }).join('') + '</div></div>';
+  }
+  if ((a.clarifying_questions || []).length) {
+    h += '<div class="sec"><div class="sec-t">' + ic('info') + 'معلومات تحدد الحكم بدقة</div><ul>' +
+      a.clarifying_questions.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>';
+  }
+  if ((a.missing_references || []).length) {
+    h += '<div class="alert warn">' + ic('alert') + '<div><b>مراجع غير متاحة يحتاجها هذا السؤال:</b><ul style="margin:4px 0 0">' +
+      a.missing_references.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div></div>';
+  }
+  h += '<div class="feedback"><span class="small muted">هل الإجابة دقيقة؟</span>' +
+       '<button class="btn ghost sm" data-fb="good">👍 نعم</button><button class="btn ghost sm" data-fb="bad">👎 بها خطأ</button></div></div>';
+  return h;
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-fb]');
+  if (!b) return;
+  var card = b.closest('.answer'), rating = b.dataset.fb, note = '';
+  if (rating === 'bad') note = prompt('ما الخطأ في الإجابة؟ (اختياري — يساعد في التحسين)') || '';
+  api('feedback', { id: card.dataset.id, rating: rating, note: note }).then(function () {
+    $('.feedback', card).innerHTML = '<span class="badge b-ok">' + ic('check') + 'شكراً، تم تسجيل تقييمك</span>';
+  }).catch(function (err) { toast(err.message, true); });
+});
+
+// ---------------- مساعد الجزاءات ----------------
+function viewPenalties(v) {
+  v.innerHTML = '<div class="card"><div class="skeleton"><div></div><div></div></div></div>';
+  api('pen.list').then(function (d) {
+    var today = new Date().toISOString().slice(0, 10);
+    v.innerHTML =
+      '<div class="card"><div class="card-head"><h2>' + ic('scale') + ' اختر المخالفة</h2></div>' +
+      (d.missing.length ? '<div class="alert warn">' + ic('info') + '<div>المخالفات ' + d.missing[0] + ' إلى ' + d.missing[d.missing.length - 1] +
+        ' غير موجودة في نسخة اللائحة المرفوعة' + (state.user.role === 'admin' ? '؛ أدخلها من صفحة الإدارة أو من جدول Penalties.' : '، ويمكن لمدير النظام إدخالها.') + '</div></div>' : '') +
+      '<input class="input" id="vs" placeholder="ابحث: تأخير، غياب، تلاعب، زي، هاتف، سلامة..." style="margin-bottom:10px">' +
+      '<div class="vlist" id="vl">' + d.violations.map(function (x) {
+        return '<div class="vitem" data-n="' + x.num + '"><span class="no">' + x.num + '</span><span>' + esc(x.text) + '</span></div>';
+      }).join('') + '</div></div>' +
+      '<div class="card hidden" id="pf"><div class="card-head"><h2 id="vt-sel"></h2></div><div id="cases"></div>' +
+      '<div class="grid g3"><div class="field"><label class="lbl">عدد مرات الجزاء السابقة عن نفس المخالفة</label><input class="input" id="prev" type="number" min="0" value="0"><div class="hint">0 = أول مرة</div></div>' +
+      '<div class="field"><label class="lbl">من سيوقع الجزاء؟</label><select class="input" id="signer"><option value="employer">صاحب العمل أو من يفوضه</option><option value="manager">مدير المنشأة</option></select></div>' +
+      '<div class="field"><label class="lbl">تاريخ اكتشاف المخالفة</label><input class="input" id="disc" type="date" value="' + today + '"></div></div>' +
+      '<details class="more"><summary>تفاصيل إضافية (المواعيد وقيمة الخصم)</summary><div class="grid g3" style="margin-top:12px">' +
+      '<div class="field"><label class="lbl">تاريخ إبلاغه بآخر جزاء عنها</label><input class="input" id="notice" type="date"><div class="hint">لحساب العود خلال سنة (م 144)</div></div>' +
+      '<div class="field"><label class="lbl">تاريخ بدء التحقيق</label><input class="input" id="istart" type="date"></div>' +
+      '<div class="field"><label class="lbl">تاريخ انتهاء التحقيق</label><input class="input" id="iend" type="date"></div>' +
+      '<div class="field"><label class="lbl">الأجر الأساسي اليومي</label><input class="input" id="wage" type="number" min="0" step="0.01"></div>' +
+      '<div class="field"><label class="lbl">أيام خُصمت هذا الشهر كجزاءات</label><input class="input" id="already" type="number" min="0" step="0.25" value="0"></div>' +
+      '</div></details><button class="btn accent" id="calcp">' + ic('scale') + 'احسب الجزاء</button></div><div id="pout"></div>';
+    var sel = null;
+    $('#vs').addEventListener('input', function (e) {
+      var q = e.target.value.trim();
+      $$('.vitem', v).forEach(function (el) { el.classList.toggle('hidden', !!q && el.textContent.indexOf(q) < 0); });
+    });
+    $$('.vitem', v).forEach(function (el) {
+      el.addEventListener('click', function () {
+        $$('.vitem', v).forEach(function (x) { x.classList.toggle('on', x === el); });
+        sel = d.violations.filter(function (x) { return x.num === +el.dataset.n; })[0];
+        $('#pf').classList.remove('hidden');
+        $('#vt-sel').textContent = 'المخالفة ' + sel.num;
+        $('#cases').innerHTML = '<p style="margin-top:0">' + esc(sel.text) + '</p>' + (sel.cases.length > 1
+          ? '<div class="field"><label class="lbl">الحالة</label><select class="input" id="case">' +
+            sel.cases.map(function (c, i) { return '<option value="' + i + '">' + esc(c.label) + '</option>'; }).join('') + '</select></div>' : '');
+        $('#pout').innerHTML = '';
+        if (window.innerWidth < 900) $('#pf').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+    $('#calcp').addEventListener('click', function () {
+      if (!sel) return;
+      var b = $('#calcp'); b.disabled = true;
+      api('pen.assess', {
+        violation_num: sel.num, case_index: $('#case') ? +$('#case').value : 0, previous_count: +$('#prev').value || 0,
+        last_penalty_notice: $('#notice').value, discovered_on: $('#disc').value, investigation_started: $('#istart').value,
+        investigation_ended: $('#iend').value, daily_basic_wage: $('#wage').value, deducted_days_this_month: $('#already').value,
+        signer: $('#signer').value
+      }).then(function (r) {
+        var h = '<div class="card"><div class="muted small">المخالفة ' + r.violation.num + ' — ' + esc(r.violation.section) + '</div>' +
+          (r.violation.case ? '<div class="small" style="margin-top:4px"><b>' + esc(r.violation.case) + '</b></div>' : '') +
+          '<div style="margin-top:10px">الحد الأقصى للجزاء (' + esc(r.occurrence_label) + '):</div><div class="result-big">' + esc(r.max_penalty.text) + '</div>' +
+          '<div class="levels">' + r.all_levels.map(function (l, i) {
+            return '<div class="' + (i === Math.min(r.occurrence, 4) - 1 ? 'on' : '') + '"><b>' + l.label + '</b>' + esc(l.text) + (l.uncertain ? ' ⚠' : '') + '</div>';
+          }).join('') + '</div><div class="small muted">' + esc(r.reminder) + '</div>';
+        if (r.deduction) {
+          h += '<div class="alert info">' + ic('calc') + '<div>الخصم: ' + r.deduction.days + ' يوم من الأجر الأساسي' +
+            (r.deduction.amount !== undefined ? ' = <b>' + fmt(r.deduction.amount) + ' جنيه</b>' : '') + '. المسموح اقتطاعه هذا الشهر: ' +
+            r.deduction.allowed_this_month + ' يوم' + (r.deduction.allowed_amount_this_month !== undefined ? ' (' + fmt(r.deduction.allowed_amount_this_month) + ' جنيه)' : '') + '.</div></div>';
+        }
+        h += alerts(r.warnings, 'bad') + alerts(r.notes, 'info');
+        if (r.deadlines.length) {
+          h += '<div class="sec"><div class="sec-t">' + ic('clock') + 'المواعيد القانونية</div><div class="tw"><table class="t"><tbody>' +
+            r.deadlines.map(function (x) { return '<tr><td>' + esc(x.label) + '</td><td class="num">' + x.date + '</td><td>' +
+              (x.late ? '<span class="badge b-bad">فات الموعد</span>' : '<span class="badge b-ok">في الموعد</span>') + '</td></tr>'; }).join('') +
+            '</tbody></table></div></div>';
+        }
+        h += '<div class="sec"><div class="sec-t">' + ic('check') + 'خطوات الإجراء الصحيح</div><ol class="steps">' +
+          r.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></div>' +
+          '<div class="sec"><div class="sec-t">' + ic('book') + 'المراجع</div>' + r.references.map(function (x) { return refChip(x.source, x.article); }).join('') + '</div>' +
+          '<div style="margin-top:16px"><button class="btn soft" id="todocs">' + ic('file') + 'إنشاء مستندات التحقيق والجزاء لهذه المخالفة</button></div></div>';
+        $('#pout').innerHTML = h;
+        $('#todocs').addEventListener('click', function () { state.docViolation = r.violation.num; go('docs'); });
+        $('#pout').scrollIntoView({ behavior: 'smooth' });
+      }).catch(function (e) { toast(e.message, true); }).then(function () { b.disabled = false; });
+    });
+  }).catch(function (e) { v.innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+}
+
+// ---------------- الحاسبات ----------------
+var CALCS = {
+  overtime: ['الأجر الإضافي', [['wage', 'الأجر الشهري الذي يُحسب عليه الإضافي', ''], ['day_hours', 'ساعات إضافية نهارية', '0'], ['night_hours', 'ساعات إضافية ليلية', '0', 'الليل: من غروب الشمس إلى شروقها'],
+    ['rest_days', 'أيام عمل في يوم الراحة', '0'], ['presence', 'أقصى ساعات تواجد في يوم (اختياري)', ''], ['divisor', 'قسمة الأجر الشهري على (أيام)', '30'], ['hours_per_day', 'ساعات العمل الأصلية في اليوم', '8']]],
+  deduction: ['حدود الخصم من الأجر', [['wage', 'الأجر الأساسي الشهري', ''], ['penalty_days', 'أيام جزاء الخصم المطلوبة', '0'], ['already', 'أيام خُصمت هذا الشهر بالفعل', '0'],
+    ['damage', 'قيمة تلف أو فقد عهدة (اختياري)', '0', 'مادة 151'], ['divisor', 'قسمة الأجر الشهري على (أيام)', '30']]],
+  insurance: ['اشتراكات التأمينات', [['wage', 'أجر الاشتراك الشهري', '', 'عناصره في المادة 1 بند 8 من قانون التأمينات'], ['year', 'السنة', String(new Date().getFullYear())]]],
+  tax: ['ضريبة المرتبات', [['wage', 'صافي الدخل الشهري الخاضع للضريبة', '', 'بعد خصم حصة العامل في التأمينات والإعفاءات']]]
+};
+function viewCalc(v) {
+  v.innerHTML = '<div class="card"><div class="tabs-scroll"><div class="seg" id="ct">' + Object.keys(CALCS).map(function (k, i) {
+    return '<button data-c="' + k + '" class="' + (i === 0 ? 'on' : '') + '">' + CALCS[k][0] + '</button>'; }).join('') + '</div></div>' +
+    '<div id="cform" style="margin-top:16px"></div></div><div id="cout"></div>';
+  function show(k) {
+    $$('#ct button', v).forEach(function (b) { b.classList.toggle('on', b.dataset.c === k); });
+    $('#cform').innerHTML = '<div class="grid g3">' + CALCS[k][1].map(function (f) {
+      return '<div class="field"><label class="lbl">' + f[1] + '</label><input class="input num" type="number" step="0.01" name="' + f[0] + '" value="' + f[2] + '">' +
+        (f[3] ? '<div class="hint">' + f[3] + '</div>' : '') + '</div>'; }).join('') + '</div><button class="btn accent" id="cgo">' + ic('calc') + 'احسب</button>';
+    $('#cout').innerHTML = '';
+    $('#cgo').addEventListener('click', function () {
+      var data = { type: k };
+      $$('#cform input', v).forEach(function (i) { data[i.name] = i.value; });
+      api('calc', data).then(function (r) { $('#cout').innerHTML = renderCalc(k, r); }).catch(function (e) { toast(e.message, true); });
+    });
+  }
+  $$('#ct button', v).forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.c); }); });
+  show('overtime');
+}
+function renderCalc(k, r) {
+  if (r.error) return '<div class="alert warn">' + ic('info') + '<div>' + esc(r.error) + '</div></div>';
+  var h = '<div class="card">';
+  if (r.summary) h += '<div class="grid g3" style="margin-bottom:12px">' + r.summary.map(function (s) {
+    return '<div class="card kpi" style="margin:0;box-shadow:none"><div class="l">' + esc(s.label) + '</div><div class="v num">' + fmt(s.value) + '</div></div>'; }).join('') + '</div>';
+  if (r.table) {
+    h += '<div class="muted small">أجر الاشتراك المحسوب: <b>' + fmt(r.insured_wage) + '</b> جنيه</div><div class="tw"><table class="t"><thead><tr><th>البند</th><th>صاحب العمل</th><th>العامل</th><th>المادة</th></tr></thead><tbody>' +
+      r.table.map(function (l) { return '<tr><td>' + esc(l.label) + '</td><td class="num">' + l.employer_rate + '% = ' + fmt(l.employer) + '</td><td class="num">' + l.employee_rate + '% = ' + fmt(l.employee) + '</td><td>' + refChip('ins148', l.article) + '</td></tr>'; }).join('') +
+      '<tr><th>الإجمالي</th><th class="num">' + r.totals.employer_rate + '% = ' + fmt(r.totals.employer) + '</th><th class="num">' + r.totals.employee_rate + '% = ' + fmt(r.totals.employee) + '</th><th></th></tr></tbody></table></div>';
+  }
+  if (r.lines) h += '<div class="tw"><table class="t"><tbody>' + r.lines.map(function (l) {
+    return '<tr><td>' + esc(l.label) + '</td><td class="num" style="text-align:left">' + fmt(l.amount) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  if (r.total) h += '<div class="row" style="margin-top:12px"><span>' + esc(r.total.label) + '</span><span class="spacer"></span><span class="result-big num">' + fmt(r.total.amount) + ' جنيه</span></div>';
+  h += alerts(r.warnings, 'warn');
+  if ((r.assumptions || []).length) h += '<div class="sec"><div class="sec-t">' + ic('info') + 'افتراضات الحساب</div><ul class="small">' + r.assumptions.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul></div>';
+  if ((r.references || []).length) h += '<div class="sec"><div class="sec-t">' + ic('book') + 'المراجع</div>' + r.references.map(function (x) { return refChip(x.source, x.article); }).join('') + '</div>';
+  return h + '</div>';
+}
+
+// ---------------- المستندات ----------------
+function viewDocs(v) {
+  v.innerHTML = '<div class="card"><div class="skeleton"><div></div><div></div></div></div>';
+  Promise.all([api('docs.fields'), api('pen.list')]).then(function (res) {
+    var cfg = res[0], pens = res[1].violations, type = 'notice';
+    v.innerHTML = '<div class="card"><div class="tabs-scroll"><div class="seg" id="dt">' + Object.keys(cfg.types).map(function (k, i) {
+      return '<button data-t="' + k + '" class="' + (i === 0 ? 'on' : '') + '">' + cfg.types[k] + '</button>'; }).join('') + '</div></div>' +
+      '<div class="alert info" style="margin-top:14px">' + ic('info') + '<div>يُنشأ مستند Google Docs ونسخة PDF في مجلد "المستشار القانوني - المستندات" على Drive. يمكن ترك أي حقل فارغاً ليُملأ يدوياً بعد الطباعة.</div></div>' +
+      '<div class="grid g2" id="df" style="margin-top:8px">' + cfg.fields.map(function (f) {
+        var input;
+        if (f.type === 'violation') input = '<select class="input" name="' + f.key + '"><option value="">— بدون —</option>' + pens.map(function (p) { return '<option value="' + p.num + '">' + p.num + '. ' + esc(p.text.slice(0, 80)) + '</option>'; }).join('') + '</select>';
+        else if (f.type === 'textarea') input = '<textarea class="input" rows="3" name="' + f.key + '"></textarea>';
+        else input = '<input class="input" type="' + f.type + '" name="' + f.key + '"' + (f.key === 'doc_date' ? ' value="' + new Date().toISOString().slice(0, 10) + '"' : '') + '>';
+        return '<div class="field" data-docs="' + f.docs.join(' ') + '"><label class="lbl">' + esc(f.label) + '</label>' + input + '</div>';
+      }).join('') + '</div><button class="btn accent" id="dgo">' + ic('file') + 'إنشاء المستند</button><div id="dres"></div></div>' +
+      '<div class="card"><div class="card-head"><h2>آخر المستندات</h2></div><div id="drecent" class="small muted">جارٍ التحميل...</div></div>';
+    function show(t) {
+      type = t;
+      $$('#dt button', v).forEach(function (b) { b.classList.toggle('on', b.dataset.t === t); });
+      $$('#df .field', v).forEach(function (f) { f.classList.toggle('hidden', f.dataset.docs.split(' ').indexOf(t) < 0); });
+      $('#dres').innerHTML = '';
+    }
+    $$('#dt button', v).forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.t); }); });
+    show('notice');
+    if (state.docViolation) { $('[name=violation_num]', v).value = state.docViolation; state.docViolation = null; }
+    $('#dgo').addEventListener('click', function () {
+      var fields = {};
+      $$('#df .field:not(.hidden) [name]', v).forEach(function (i) { fields[i.name] = i.value; });
+      var b = $('#dgo'); b.disabled = true; b.innerHTML = '<div class="spin"></div> جارٍ الإنشاء...';
+      api('docs.generate', { doc_type: type, fields: fields }).then(function (r) {
+        $('#dres').innerHTML = '<div class="alert ok" style="margin-top:14px">' + ic('check') + '<div><b>' + esc(r.title) + '</b><div class="row" style="margin-top:8px">' +
+          '<a class="btn sm" target="_blank" rel="noopener" href="' + esc(r.docUrl) + '">' + ic('ext') + 'فتح في Google Docs</a>' +
+          '<a class="btn soft sm" target="_blank" rel="noopener" href="' + esc(r.pdfUrl) + '">' + ic('doc') + 'نسخة PDF</a></div></div></div>';
+        loadRecent();
+      }).catch(function (e) { toast(e.message, true); }).then(function () { b.disabled = false; b.innerHTML = ic('file') + 'إنشاء المستند'; });
+    });
+    function loadRecent() {
+      api('docs.recent').then(function (rows) {
+        $('#drecent').innerHTML = rows.length ? '<div class="tw"><table class="t"><thead><tr><th>النوع</th><th>العامل</th><th>بواسطة</th><th>التاريخ</th><th></th></tr></thead><tbody>' +
+          rows.map(function (r) { return '<tr><td>' + esc(r.doc_type) + '</td><td>' + esc(r.employee) + '</td><td>' + esc(r.username) + '</td><td class="num">' + esc(r.time) +
+            '</td><td><a target="_blank" rel="noopener" href="' + esc(r.doc_url) + '">فتح</a> · <a target="_blank" rel="noopener" href="' + esc(r.pdf_url) + '">PDF</a></td></tr>'; }).join('') +
+          '</tbody></table></div>' : '<div class="empty">لا توجد مستندات بعد.</div>';
+      }).catch(function () {});
+    }
+    loadRecent();
+  }).catch(function (e) { v.innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+}
+
+// ---------------- القوانين ----------------
+function isAdmin() { return state.user && state.user.role === 'admin'; }
+function viewLaws(v) {
+  v.innerHTML = '<div class="card"><div class="row"><input class="input" id="ls" placeholder="ابحث في كل المراجع: الإجازة السنوية، الخصم من الأجر، مادة 121..." style="flex:1;min-width:200px">' +
+    '<button class="btn" id="lgo">' + ic('search') + 'بحث</button></div><div id="lres"></div></div>' +
+    (isAdmin() ? '<div class="row" style="margin-bottom:12px"><button class="btn accent" id="lnew">' + ic('plus') + 'إضافة قانون أو لائحة جديدة</button>' +
+      '<span class="small muted">لتعديل أو إضافة مواد لمرجع موجود: افتحه من القائمة.</span></div>' : '') +
+    '<div class="grid g2" id="srcs"></div>';
+  if (isAdmin()) $('#lnew').addEventListener('click', function () { sourceForm(v, null); });
+  api('kb.sources').then(function (list) {
+    list.forEach(function (s) { state.sources[s.id] = s; });
+    $('#srcs').innerHTML = list.map(function (s) {
+      return '<div class="card src-card" data-s="' + s.id + '"><div class="row"><h3>' + esc(s.short) + '</h3><span class="spacer"></span><span class="badge b-info">' + s.count + (s.id === 'penreg' ? ' مخالفة' : ' مادة') + '</span></div>' +
+        '<div class="small" style="margin:6px 0">' + esc(s.title) + '</div><div class="small muted">' + esc(s.notes) + '</div></div>';
+    }).join('');
+    $$('.src-card', v).forEach(function (c) { c.addEventListener('click', function () { openSource(v, c.dataset.s); }); });
+  });
+  var search = function () {
+    var q = $('#ls').value.trim(); if (!q) return;
+    api('kb.search', { q: q }).then(function (d) {
+      $('#lres').innerHTML = d.results.length ? d.results.map(function (r) {
+        return '<div class="art"><h3>' + refChip(r.source, r.num) + '<span class="ch">' + esc(r.chapter) + '</span></h3><div class="tx small">' + esc(r.snippet) + '…</div></div>';
+      }).join('') : '<div class="empty">لا توجد نتائج.</div>';
+    }).catch(function (e) { toast(e.message, true); });
+  };
+  $('#lgo').addEventListener('click', search);
+  $('#ls').addEventListener('keydown', function (e) { if (e.key === 'Enter') search(); });
+}
+function openSource(v, id) {
+  v.innerHTML = '<div class="card"><div class="skeleton"><div></div><div></div><div></div></div></div>';
+  api('kb.list', { source: id }).then(function (d) {
+    var canEdit = isAdmin() && id !== 'penreg';
+    v.innerHTML = '<div class="card"><div class="row"><button class="btn ghost sm" id="back">→ رجوع</button><span class="spacer"></span>' +
+      (canEdit ? '<button class="btn accent sm" id="eadd">' + ic('plus') + 'إضافة / تعديل مواد</button><button class="btn ghost sm" id="emeta">' + ic('edit') + 'بيانات المرجع</button>' : '') +
+      (isAdmin() && id === 'penreg' ? '<button class="btn ghost sm" id="epen">' + ic('edit') + 'تعديل المخالفات</button>' : '') +
+      (d.source.pdfUrl ? '<a class="btn soft sm" target="_blank" rel="noopener" href="' + esc(d.source.pdfUrl) + '">' + ic('ext') + 'الملف الأصلي</a>' : '') + '</div>' +
+      '<h2 style="margin:12px 0 6px;font-size:18px">' + esc(d.source.title) + '</h2>' + (d.source.notes ? '<div class="alert info small">' + ic('info') + '<div>' + esc(d.source.notes) + '</div></div>' : '') +
+      '<input class="input" id="af" placeholder="تصفية: كلمة أو رقم مادة"></div><div class="card" id="al">' + d.articles.map(function (a) {
+        return '<div class="art" data-q="' + esc(a.label + ' ' + a.text.slice(0, 3000)) + '"><h3>' + esc(a.label) + (a.chapter ? '<span class="ch">' + esc(a.chapter) + '</span>' : '') +
+          (a.page ? '<span class="badge b-info">صفحة ' + a.page + '</span>' : '') +
+          (canEdit ? '<span class="spacer"></span><button class="btn ghost sm" data-ae="' + esc(a.num) + '" title="تعديل">' + ic('edit') + '</button>' +
+            '<button class="btn danger sm" data-ad="' + esc(a.num) + '" title="حذف">' + ic('trash') + '</button>' : '') +
+          '</h3><div class="tx">' + esc(a.text) + '</div></div>';
+      }).join('') + (d.articles.length ? '' : '<div class="empty">لا توجد مواد بعد. اضغط "إضافة / تعديل مواد".</div>') + '</div>';
+    $('#back').addEventListener('click', function () { viewLaws(v); });
+    if (isAdmin() && id === 'penreg') $('#epen').addEventListener('click', function () { go('admin'); });
+    if (canEdit) {
+      var reopen = function (msg) { toast(msg); openSource(v, id); };
+      $('#eadd').addEventListener('click', function () { articleEditor(d.source, null, reopen); });
+      $('#emeta').addEventListener('click', function () { sourceForm(v, d.source); });
+      $$('[data-ae]', v).forEach(function (b) { b.addEventListener('click', function () {
+        var a = d.articles.filter(function (x) { return x.num === b.dataset.ae; })[0];
+        articleEditor(d.source, a, reopen);
+      }); });
+      $$('[data-ad]', v).forEach(function (b) { b.addEventListener('click', function () {
+        if (!confirm('حذف المادة ' + b.dataset.ad + ' من "' + d.source.short + '" نهائياً؟')) return;
+        api('admin.articleDelete', { source: id, num: b.dataset.ad }).then(function () { reopen('تم حذف المادة'); }).catch(function (e) { toast(e.message, true); });
+      }); });
+    }
+    $('#af').addEventListener('input', function (e) {
+      var q = e.target.value.trim();
+      $$('#al .art', v).forEach(function (el) { el.classList.toggle('hidden', !!q && el.dataset.q.indexOf(q) < 0); });
+    });
+  }).catch(function (e) { v.innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+}
+
+// ---------------- تعديل القوانين (مدير النظام) ----------------
+function sourceForm(v, src) {
+  var isNew = !src;
+  var m = modal(isNew ? 'إضافة قانون أو لائحة' : 'بيانات المرجع',
+    '<div class="field"><label class="lbl">الاسم الكامل</label><input class="input" id="sft" value="' + esc(src ? src.title : '') + '" placeholder="مثال: قانون العمل رقم 14 لسنة 2025"></div>' +
+    '<div class="grid g2"><div class="field"><label class="lbl">اسم مختصر (يظهر في الإجابات)</label><input class="input" id="sfs" value="' + esc(src ? src.short : '') + '" placeholder="مثال: لائحة الشركة"></div>' +
+    (isNew ? '<div class="field"><label class="lbl">رمز إنجليزي (اختياري)</label><input class="input" id="sfi" dir="ltr" placeholder="company_reg"><div class="hint">حروف وأرقام فقط، يُنشأ تلقائياً إذا تركته فارغاً</div></div>' : '<div></div>') +
+    '</div><div class="field"><label class="lbl">ملاحظات (مثل: سارية من تاريخ، أو نسخة استرشادية)</label><textarea class="input" id="sfn" rows="2">' + esc(src ? src.notes : '') + '</textarea></div>',
+    (!isNew && !(state.sources[src.id] || {}).core ? '<button class="btn danger" id="sfd">' + ic('trash') + 'حذف المرجع</button><span class="spacer"></span>' : '') +
+    '<button class="btn ghost" data-close>إلغاء</button><button class="btn accent" id="sfgo">حفظ</button>');
+  $('#sfgo', m).addEventListener('click', function () {
+    var b = this; b.disabled = true;
+    api('admin.sourceSave', { isNew: isNew, id: isNew ? $('#sfi', m).value.trim() : src.id, title: $('#sft', m).value, short: $('#sfs', m).value, notes: $('#sfn', m).value })
+      .then(function (r) {
+        m.remove(); toast(isNew ? 'تمت إضافة المرجع، أضف مواده الآن' : 'تم الحفظ');
+        return api('kb.sources').then(function (list) { list.forEach(function (s) { state.sources[s.id] = s; }); openSource(v, r.id); });
+      }).catch(function (e) { toast(e.message, true); b.disabled = false; });
+  });
+  var del = $('#sfd', m);
+  if (del) del.addEventListener('click', function () {
+    if (!confirm('حذف "' + src.short + '" وكل مواده نهائياً؟')) return;
+    api('admin.sourceDelete', { id: src.id }).then(function () { m.remove(); delete state.sources[src.id]; toast('تم حذف المرجع'); viewLaws(v); })
+      .catch(function (e) { toast(e.message, true); });
+  });
+}
+
+/** محرر المواد: مادة واحدة بالكتابة، أو لصق نص كامل يُقسّم تلقائياً، أو صورة/PDF يُستخرج نصها. */
+function articleEditor(src, art, done) {
+  var tabs = art ? [['one', 'تعديل المادة']] : [['one', 'كتابة مادة'], ['paste', 'لصق نص كامل'], ['file', 'صورة أو PDF']];
+  var m = modal((art ? 'تعديل ' + art.label : 'إضافة مواد') + ' — ' + src.short,
+    '<div class="seg" id="et" style="margin-bottom:14px">' + tabs.map(function (t, i) { return '<button data-t="' + t[0] + '"' + (i ? '' : ' class="on"') + '>' + t[1] + '</button>'; }).join('') + '</div><div id="eb"></div>',
+    '<button class="btn ghost" data-close>إلغاء</button><button class="btn accent" id="esave">حفظ</button>');
+  m.querySelector('.modal').classList.add('wide'); m.dataset.sticky = '1';
+  var tab = 'one', preview = null;
+  var body = $('#eb', m), save = $('#esave', m);
+  var show = function (t) {
+    tab = t; preview = null;
+    $$('#et button', m).forEach(function (b) { b.classList.toggle('on', b.dataset.t === t); });
+    save.hidden = t !== 'one';
+    if (t === 'one') {
+      body.innerHTML = '<div class="grid g3"><div class="field"><label class="lbl">رقم المادة</label><input class="input" id="en" value="' + esc(art ? art.num : '') + '" placeholder="5 أو 12 مكرر"></div>' +
+        '<div class="field"><label class="lbl">العنوان</label><input class="input" id="el" value="' + esc(art ? art.label : '') + '" placeholder="مادة (5)"></div>' +
+        '<div class="field"><label class="lbl">الباب / الفصل (اختياري)</label><input class="input" id="ec" value="' + esc(art ? art.chapter : '') + '"></div></div>' +
+        '<div class="field"><label class="lbl">نص المادة</label><textarea class="input" id="ex" rows="10">' + esc(art ? art.text : '') + '</textarea>' +
+        '<div class="hint">إذا كتبت رقم مادة موجودة سيُستبدل نصها بالنص الجديد.</div></div>';
+    } else if (t === 'paste') {
+      body.innerHTML = '<div class="field"><label class="lbl">الصق النص هنا (من Word أو PDF أو موقع)</label><textarea class="input" id="ep" rows="12" placeholder="مادة (1)\n...نص المادة...\n\nمادة (2)\n..."></textarea>' +
+        '<div class="hint">البرنامج يقسّمه تلقائياً حسب عناوين المواد مثل "مادة (5)" أو "المادة الخامسة"، ثم تراجعه قبل الحفظ.</div></div>' +
+        '<button class="btn" id="esplit">' + ic('check') + 'تقسيم ومراجعة</button><div id="epv"></div>';
+      $('#esplit', m).addEventListener('click', function () {
+        var txt = $('#ep', m).value; if (!txt.trim()) return toast('الصق النص أولاً', true);
+        api('admin.splitText', { text: txt }).then(function (r) { renderPreview(r.articles); }).catch(function (e) { toast(e.message, true); });
+      });
+    } else {
+      body.innerHTML = '<div class="alert info small">' + ic('info') + '<div>صوّر الصفحة بوضوح أو اختر ملف PDF (حتى 8 ميجا). الذكاء الاصطناعي يقرأ النص ويقسّمه إلى مواد، ثم تراجعه وتصححه قبل الحفظ. يحتاج مفتاح Gemini.</div></div>' +
+        '<div class="row"><input class="input" id="ef" type="file" accept="image/*,application/pdf" style="flex:1;min-width:200px"><button class="btn" id="eread">' + ic('search') + 'قراءة النص</button></div><div id="epv"></div>';
+      $('#eread', m).addEventListener('click', function () {
+        var f = $('#ef', m).files[0], b = this;
+        if (!f) return toast('اختر صورة أو ملف PDF', true);
+        if (f.size > 8 * 1024 * 1024) return toast('الملف أكبر من 8 ميجا. قسّمه أو صوّر الصفحات المطلوبة فقط', true);
+        b.disabled = true;
+        $('#epv', m).innerHTML = '<div class="loading-line" style="margin-top:10px"><div class="spin"></div><span id="eprog">جارٍ الرفع...</span></div>';
+        readBase64(f).then(function (b64) {
+          return uploadChunks(b64, 'admin.extractUpload', {}, function (i, n) { var p = $('#eprog', m); if (p) p.textContent = 'جارٍ الرفع ' + Math.round(i / n * 100) + '%'; })
+            .then(function (total) { var p = $('#eprog', m); if (p) p.textContent = 'جارٍ قراءة النص بالذكاء الاصطناعي (قد يستغرق دقيقة)...';
+              return api('admin.extract', { mime: f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : 'image/jpeg'), total: total }); });
+        }).then(function (r) { renderPreview(r.articles); })
+          .catch(function (e) { $('#epv', m).innerHTML = '<div class="alert bad">' + ic('alert') + '<div>' + esc(e.message) + '</div></div>'; })
+          .then(function () { b.disabled = false; });
+      });
+    }
+  };
+  var renderPreview = function (list) {
+    preview = list;
+    save.hidden = false;
+    save.textContent = 'حفظ ' + list.length + ' مادة';
+    $('#epv', m).innerHTML = '<div class="alert warn small" style="margin-top:12px">' + ic('alert') + '<div>راجع الأرقام والنصوص وصحّح أي خطأ قبل الحفظ. المادة الموجودة بنفس الرقم سيُستبدل نصها.</div></div>' +
+      list.map(function (a, i) {
+        return '<div class="pv" data-i="' + i + '"><div class="row"><label class="row small"><input type="checkbox" class="pk" checked> حفظ</label>' +
+          '<input class="input pn" value="' + esc(a.num) + '" style="width:110px" title="رقم المادة"><input class="input pl" value="' + esc(a.label) + '" style="flex:1" title="العنوان"></div>' +
+          '<textarea class="input px" rows="4">' + esc(a.text) + '</textarea></div>';
+      }).join('');
+  };
+  save.addEventListener('click', function () {
+    var list;
+    if (tab === 'one') {
+      list = [{ num: $('#en', m).value, label: $('#el', m).value, chapter: $('#ec', m).value, text: $('#ex', m).value }];
+      if (!list[0].num.trim() || !list[0].text.trim()) return toast('اكتب رقم المادة ونصها', true);
+    } else {
+      list = $$('.pv', m).filter(function (el) { return $('.pk', el).checked; }).map(function (el) {
+        var a = preview[+el.dataset.i];
+        return { num: $('.pn', el).value, label: $('.pl', el).value, chapter: a.chapter, text: $('.px', el).value };
+      });
+      if (!list.length) return toast('لم تختر أي مادة', true);
+    }
+    save.disabled = true;
+    api('admin.articlesSave', { source: src.id, articles: list, origNum: art ? art.num : undefined })
+      .then(function (r) { m.remove(); done('تم الحفظ: ' + r.added + ' مادة جديدة و' + r.updated + ' مادة معدّلة'); })
+      .catch(function (e) { toast(e.message, true); save.disabled = false; });
+  });
+  $$('#et button', m).forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.t); }); });
+  show('one');
+}
+
+function readBase64(file) {
+  return new Promise(function (resolve, reject) {
+    var r = new FileReader();
+    r.onerror = function () { reject(new Error('تعذرت قراءة الملف')); };
+    r.onload = function () { resolve(String(r.result).replace(/^data:[^,]*,/, '')); };
+    r.readAsDataURL(file);
+  });
+}
+
+/** يرفع نصاً طويلاً للخادم على أجزاء (كل جزء 80 ألف حرف) ويعيد عدد الأجزاء. */
+function uploadChunks(text, action, extra, onProgress) {
+  var size = 80000, total = Math.ceil(text.length / size), i = 0;
+  return new Promise(function (resolve, reject) {
+    (function next() {
+      if (i >= total) return resolve(total);
+      var payload = Object.assign({ index: i, total: total, chunk: text.substr(i * size, size) }, extra || {});
+      api(action, payload).then(function () { i++; if (onProgress) onProgress(i, total); next(); }).catch(reject);
+    })();
+  });
+}
+
+// ---------------- السجل ----------------
+function viewHistory(v) {
+  v.innerHTML = '<div class="card"><div class="skeleton"><div></div><div></div></div></div>';
+  api('history').then(function (rows) {
+    v.innerHTML = '<div class="card"><div class="card-head"><h2>' + (state.user.role === 'admin' ? 'كل الأسئلة' : 'أسئلتك السابقة') + '</h2></div>' +
+      (rows.length ? '<div class="tw"><table class="t"><thead><tr><th>السؤال</th>' + (state.user.role === 'admin' ? '<th>المستخدم</th>' : '') + '<th>التاريخ</th><th>التقييم</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr><td><a href="#" data-h="' + esc(r.id) + '">' + esc(r.question) + '</a>' + (r.provider === 'search' ? ' <span class="badge b-info">بحث</span>' : '') + '</td>' +
+          (state.user.role === 'admin' ? '<td>' + esc(r.username) + '</td>' : '') + '<td class="num small">' + esc(r.time) + '</td><td>' +
+          (r.feedback === 'good' ? '<span class="badge b-ok">دقيقة</span>' : r.feedback === 'bad' ? '<span class="badge b-bad">بها خطأ</span>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div class="empty">لا توجد أسئلة بعد.</div>') + '</div><div id="hv"></div>';
+    $$('[data-h]', v).forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        api('history.get', { id: a.dataset.h }).then(function (r) { $('#hv').innerHTML = renderAnswer(r); $('#hv').scrollIntoView({ behavior: 'smooth' }); })
+          .catch(function (err) { toast(err.message, true); });
+      });
+    });
+  }).catch(function (e) { v.innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+}
+
+// ---------------- الإدارة ----------------
+function viewAdmin(v) {
+  v.innerHTML = '<div class="card"><div class="skeleton"><div></div><div></div><div></div></div></div>';
+  Promise.all([api('admin.overview'), api('pen.list')]).then(function (res) {
+    var o = res[0], pen = res[1];
+    var lim = o.settings.insurance_limits, tax = o.settings.payroll_tax || {};
+    v.innerHTML =
+      '<div class="grid g3">' +
+      kpi('أسئلة هذا الشهر', o.stats.month) + kpi('إجابات بالذكاء الاصطناعي / بحث فقط', o.stats.ai + ' / ' + o.stats.search) +
+      kpi('تقييمات: دقيقة / بها خطأ', o.stats.good + ' / ' + o.stats.bad) + '</div>' +
+
+      aiCard(o.ai) +
+
+      '<div class="card"><div class="card-head"><h2>' + ic('user') + ' المستخدمون</h2><span class="spacer"></span><span class="badge b-info">' + o.users.length + ' من ' + o.maxUsers + '</span></div>' +
+      '<div class="tw"><table class="t"><thead><tr><th>الاسم</th><th>المستخدم</th><th>الدور</th><th>الأسئلة</th><th>آخر دخول</th><th></th></tr></thead><tbody>' +
+      o.users.map(function (u) {
+        return '<tr><td>' + esc(u.full_name) + '</td><td dir="ltr" style="text-align:right">' + esc(u.username) + '</td><td>' + (u.role === 'admin' ? 'مدير النظام' : 'مستخدم') + '</td>' +
+          '<td class="num">' + u.questions + '</td><td class="small num">' + esc(String(u.last_login).slice(0, 16)) + '</td><td><div class="row">' +
+          (u.active ? '' : '<span class="badge b-bad">موقوف</span>') +
+          (u.username !== state.user.username ? '<button class="btn ghost sm" data-ut="' + esc(u.username) + '">' + (u.active ? 'إيقاف' : 'تفعيل') + '</button>' +
+            '<button class="btn danger sm" data-ud="' + esc(u.username) + '">' + ic('trash') + '</button>' : '') +
+          '<button class="btn soft sm" data-up="' + esc(u.username) + '">' + ic('key') + '</button></div></td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      (o.users.length < o.maxUsers ? '<div class="sec"><div class="sec-t">إضافة مستخدم</div><div class="grid g3">' +
+        '<div class="field"><label class="lbl">الاسم الكامل</label><input class="input" id="nfn"></div>' +
+        '<div class="field"><label class="lbl">اسم المستخدم (إنجليزي)</label><input class="input" id="nun" dir="ltr"></div>' +
+        '<div class="field"><label class="lbl">كلمة المرور</label><input class="input" id="npw" type="text" dir="ltr"><div class="hint">8 أحرف على الأقل، أرقام وحروف</div></div>' +
+        '<div class="field"><label class="lbl">الدور</label><select class="input" id="nrole"><option value="user">مستخدم</option><option value="admin">مدير نظام</option></select></div>' +
+        '</div><button class="btn accent" id="nadd">إضافة</button></div>' : '<div class="alert info">' + ic('info') + '<div>وصلت للحد الأقصى (' + o.maxUsers + ' حسابات).</div></div>') + '</div>' +
+
+      '<div class="card"><div class="card-head"><h2>' + ic('scale') + ' مخالفات لائحة الجزاءات</h2></div>' +
+      (pen.missing.length ? '<div class="alert warn">' + ic('alert') + '<div>ناقصة من الملف المرفوع: <b>' + pen.missing.join('، ') + '</b>. أدخلها هنا من النسخة الورقية كما هي، أو اكتبها مباشرة في جدول Penalties.</div></div>' : '<div class="alert ok">' + ic('check') + '<div>كل المخالفات من 1 إلى 102 موجودة.</div></div>') +
+      '<div class="grid g3"><div class="field"><label class="lbl">رقم المخالفة</label><input class="input" id="pn" type="number" value="' + (pen.missing[0] || '') + '"><div class="hint">اكتب رقماً موجوداً لتصحيحه</div></div>' +
+      '<div class="field" style="grid-column:span 2"><label class="lbl">القسم</label><select class="input" id="psec">' + pen.sections.map(function (s, i) { return '<option' + (i === 2 ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="field"><label class="lbl">نص المخالفة كما في اللائحة</label><textarea class="input" id="ptx" rows="2"></textarea></div><div class="grid g3">' +
+      ['أول مرة', 'ثاني مرة', 'ثالث مرة', 'رابع مرة'].map(function (l, i) {
+        return '<div class="field"><label class="lbl">' + l + '</label><select class="input" id="pc' + (i + 1) + '">' +
+          Object.keys(pen.codes).filter(function (k) { return k !== 'A'; }).map(function (k) { return '<option value="' + k + '">' + esc(pen.codes[k]) + '</option>'; }).join('') + '</select></div>';
+      }).join('') + '</div><button class="btn accent" id="psave">حفظ المخالفة</button>' +
+      (pen.violations.some(function (x) { return x.manual; }) ? '<div class="sec"><div class="sec-t">أُدخلت يدوياً</div>' + pen.violations.filter(function (x) { return x.manual; }).map(function (x) {
+        return '<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><b>' + x.num + '</b><span class="small" style="flex:1">' + esc(x.text) + '</span><span class="small muted">' + esc(x.entered_by) + '</span>' +
+          '<button class="btn danger sm" data-pd="' + x.num + '">' + ic('trash') + '</button></div>'; }).join('') + '</div>' : '') + '</div>' +
+
+      '<div class="grid g2"><div class="card"><div class="card-head"><h2>حدود أجر الاشتراك التأميني</h2></div><div class="small muted">يحددها قرار سنوي وليست في نص القانون.</div>' +
+      '<table class="t"><tbody>' + (Object.keys(lim).sort().map(function (y) { return '<tr><td>' + y + '</td><td class="num">الأدنى ' + fmt(lim[y].min) + '</td><td class="num">الأقصى ' + fmt(lim[y].max) + '</td></tr>'; }).join('') || '<tr><td class="muted">لم تُدخل أي سنة.</td></tr>') + '</tbody></table>' +
+      '<div class="grid g3" style="margin-top:10px"><input class="input" id="iy" type="number" placeholder="السنة"><input class="input" id="imn" type="number" placeholder="الحد الأدنى"><input class="input" id="imx" type="number" placeholder="الحد الأقصى"></div>' +
+      '<button class="btn" id="isave" style="margin-top:10px">حفظ</button></div>' +
+
+      '<div class="card"><div class="card-head"><h2>شرائح ضريبة المرتبات</h2></div><div class="small muted">ليست ضمن المراجع. كل سطر: "الحد الأعلى للشريحة، النسبة"، والأخيرة "-، النسبة".</div>' +
+      '<textarea class="input" id="tb" rows="5" dir="ltr" style="margin-top:8px">' + esc((tax.brackets || []).map(function (b) { return (b.up_to === null ? '-' : b.up_to) + ', ' + b.rate; }).join('\n')) + '</textarea>' +
+      '<div class="grid g2" style="margin-top:8px"><input class="input" id="tex" type="number" placeholder="الإعفاء الشخصي السنوي" value="' + esc(tax.personal_exemption || '') + '"><input class="input" id="tsrc" placeholder="المصدر (رقم القانون والتاريخ)" value="' + esc(tax.source || '') + '"></div>' +
+      '<button class="btn" id="tsave" style="margin-top:10px">حفظ</button></div></div>' +
+
+      '<div class="card"><div class="card-head"><h2>' + ic('book') + ' تحديث ملف القوانين</h2></div><div class="small muted">لاستبدال القوانين واللوائح وجدول الجزاءات بنسخة أحدث (FullSpeed_Legal_Data.json). المستخدمون والسجل والإعدادات لا تتأثر، لكن المخالفات المُدخلة يدوياً تُستبدل بما في الملف.</div>' +
+      '<div class="row" style="margin-top:10px"><input class="input" id="udf" type="file" accept=".json" style="max-width:360px"><button class="btn" id="ugo">رفع وتحديث</button></div></div>' +
+      '<div class="card"><div class="card-head"><h2>عام</h2></div><div class="row"><input class="input" id="cname" value="' + esc(o.settings.company_name) + '" style="max-width:320px">' +
+      '<button class="btn" id="csave">حفظ اسم الشركة</button><span class="spacer"></span><a class="btn ghost" target="_blank" rel="noopener" href="' + esc(o.sheetUrl) + '">' + ic('ext') + 'فتح جدول البيانات</a></div></div>';
+
+    var reload = function (msg) { toast(msg); viewAdmin(v); };
+    var fail = function (e) { toast(e.message, true); };
+    $('#asave').addEventListener('click', function () {
+      var p = api('admin.saveSettings', { gemini_model: $('#amodel').value, ai_mode: $('#amode').value });
+      [['free', '#akey'], ['paid', '#akey2']].forEach(function (k) {
+        var val = $(k[1]).value.trim();
+        if (val) p = p.then(function () { return api('admin.saveApiKey', { tier: k[0], key: val }); });
+      });
+      p.then(function () { reload('تم الحفظ'); }).catch(fail);
+    });
+    $$('[data-kdel]', v).forEach(function (b) { b.addEventListener('click', function () {
+      if (confirm('حذف ' + (b.dataset.kdel === 'paid' ? 'المفتاح المدفوع' : 'المفتاح المجاني') + '؟'))
+        api('admin.saveApiKey', { tier: b.dataset.kdel, remove: true }).then(function () { reload('تم الحذف'); }).catch(fail); }); });
+    $('#atest').addEventListener('click', function () {
+      $('#ares').innerHTML = '<div class="loading-line" style="margin-top:10px"><div class="spin"></div>جارٍ الاختبار...</div>';
+      api('admin.testAi').then(function (r) {
+        if (!r.results.length) { $('#ares').innerHTML = '<div class="alert bad">' + ic('alert') + '<div>' + esc(r.error) + '</div></div>'; return; }
+        $('#ares').innerHTML = r.results.map(function (x) {
+          return x.ok ? '<div class="alert ok">' + ic('check') + '<div>المفتاح ' + esc(x.label) + ' يعمل (' + esc(r.model) + ').</div></div>'
+            : '<div class="alert bad">' + ic('alert') + '<div>المفتاح ' + esc(x.label) + ': ' + esc(x.error) + '<div class="small" dir="ltr" style="opacity:.8">' + esc(x.detail) + '</div></div></div>';
+        }).join('');
+      }).catch(fail);
+    });
+    var nadd = $('#nadd');
+    if (nadd) nadd.addEventListener('click', function () {
+      api('admin.userCreate', { fullName: $('#nfn').value, username: $('#nun').value, password: $('#npw').value, role: $('#nrole').value })
+        .then(function () { reload('تمت إضافة المستخدم'); }).catch(fail);
+    });
+    $$('[data-ut]', v).forEach(function (b) { b.addEventListener('click', function () { api('admin.userToggle', { username: b.dataset.ut }).then(function () { reload('تم التحديث'); }).catch(fail); }); });
+    $$('[data-ud]', v).forEach(function (b) { b.addEventListener('click', function () {
+      if (confirm('حذف المستخدم ' + b.dataset.ud + ' نهائياً؟')) api('admin.userDelete', { username: b.dataset.ud }).then(function () { reload('تم الحذف'); }).catch(fail); }); });
+    $$('[data-up]', v).forEach(function (b) { b.addEventListener('click', function () {
+      var p = prompt('كلمة المرور الجديدة للمستخدم ' + b.dataset.up + ' (8 أحرف على الأقل، أرقام وحروف):');
+      if (p) api('admin.userPassword', { username: b.dataset.up, password: p }).then(function () { toast('تم تغيير كلمة المرور'); }).catch(fail); }); });
+    $('#pn').addEventListener('change', function () {
+      var x = pen.violations.filter(function (y) { return y.num === +$('#pn').value; })[0];
+      if (!x) return;
+      $('#ptx').value = x.text; $('#psec').value = x.section;
+      x.cases[0].penalties.forEach(function (p, i) { if (p.code !== 'A') $('#pc' + (i + 1)).value = p.code; });
+    });
+    $('#psave').addEventListener('click', function () {
+      api('admin.penSave', { num: $('#pn').value, section: $('#psec').value, text: $('#ptx').value, c1: $('#pc1').value, c2: $('#pc2').value, c3: $('#pc3').value, c4: $('#pc4').value })
+        .then(function () { reload('تم حفظ المخالفة وتحديث البيانات'); }).catch(fail);
+    });
+    $$('[data-pd]', v).forEach(function (b) { b.addEventListener('click', function () {
+      if (confirm('حذف الإدخال اليدوي للمخالفة ' + b.dataset.pd + '؟')) api('admin.penDelete', { num: b.dataset.pd }).then(function () { reload('تم الحذف'); }).catch(fail); }); });
+    $('#isave').addEventListener('click', function () {
+      api('admin.saveSettings', { insurance_year: $('#iy').value, insurance_min: $('#imn').value, insurance_max: $('#imx').value }).then(function () { reload('تم الحفظ'); }).catch(fail); });
+    $('#tsave').addEventListener('click', function () {
+      api('admin.saveSettings', { tax_brackets: $('#tb').value, tax_exemption: $('#tex').value, tax_source: $('#tsrc').value }).then(function () { reload('تم الحفظ'); }).catch(fail); });
+    $('#ugo').addEventListener('click', function () {
+      var f = $('#udf').files[0], b = $('#ugo');
+      if (!f || !confirm('استبدال القوانين واللوائح وجدول الجزاءات بمحتوى هذا الملف؟')) return;
+      b.disabled = true;
+      uploadDataFile(f, 'admin.upload', {}, function (i, n) { b.textContent = Math.round(i / n * 100) + '%'; })
+        .then(function (parts) { b.textContent = 'جارٍ التثبيت...'; return api('admin.importData', { total: parts }); })
+        .then(function (r) { reload('تم تحديث ' + r.articles + ' مادة و' + r.penalties + ' صف جزاءات'); })
+        .catch(function (e) { fail(e); b.disabled = false; b.textContent = 'رفع وتحديث'; });
+    });
+    $('#csave').addEventListener('click', function () {
+      api('admin.saveSettings', { company_name: $('#cname').value }).then(function () { window.COMPANY = $('#cname').value; reload('تم الحفظ'); }).catch(fail); });
+  }).catch(function (e) { v.innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+}
+function aiCard(ai) {
+  var MODELS = [['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite — موصى به (سريع، حوالي 500 سؤال/يوم مجاناً)'],
+                ['gemini-3.5-flash', 'Gemini 3.5 Flash — متوازن'],
+                ['gemini-3.8-flash', 'Gemini 3.8 Flash — أدق (حصة مجانية صغيرة، مناسب للمدفوع)']];
+  var keyField = function (id, tier, has, label, hint) {
+    return '<div class="field"><label class="lbl">' + label + ' ' + (has ? '<span class="badge b-ok">محفوظ</span>' : '<span class="badge b-info">غير مُعدّ</span>') + '</label>' +
+      '<div class="row"><input class="input" id="' + id + '" type="password" dir="ltr" autocomplete="off" style="flex:1" placeholder="' + (has ? '•••••••• (اتركه فارغاً للإبقاء)' : 'AIza... أو AQ...') + '">' +
+      (has ? '<button class="btn danger sm" data-kdel="' + tier + '" title="حذف">' + ic('trash') + '</button>' : '') + '</div><div class="hint">' + hint + '</div></div>';
+  };
+  return '<div class="card"><div class="card-head"><h2>' + ic('bolt') + ' الذكاء الاصطناعي (Gemini)</h2><span class="spacer"></span>' +
+    (ai.hasKey ? '<span class="badge b-ok">يعمل</span>' : '<span class="badge b-bad">لا يوجد مفتاح — وضع البحث فقط</span>') + '</div>' +
+    '<div class="small muted" style="margin-bottom:12px">أسئلة اليوم: <b class="num">' + ai.usedToday + '</b> (المجاني <b class="num">' + ai.usedFree + '</b> · المدفوع <b class="num">' + ai.usedPaid + '</b>). ' +
+    'عند انتهاء حصة المجاني ينتقل البرنامج تلقائياً للمدفوع، وإذا لم يوجد يعرض أقرب المواد.</div>' +
+    '<div class="grid g2">' +
+    keyField('akey', 'free', ai.hasFree, 'المفتاح المجاني', 'من aistudio.google.com ← Get API key، من مشروع بدون فوترة. الأسئلة قد تستخدمها Google لتحسين خدماتها.') +
+    keyField('akey2', 'paid', ai.hasPaid, 'المفتاح المدفوع', 'من مشروع مفعّل عليه الفوترة (Billing). أسئلته لا تستخدمها Google، والتكلفة صغيرة جداً.') +
+    '<div class="field"><label class="lbl">طريقة الاستخدام</label><select class="input" id="amode">' +
+    [['free_first', 'المجاني أولاً ثم المدفوع (موصى به)'], ['paid_only', 'المدفوع فقط (خصوصية أعلى)'], ['free_only', 'المجاني فقط']]
+      .map(function (m) { return '<option value="' + m[0] + '"' + (ai.mode === m[0] ? ' selected' : '') + '>' + m[1] + '</option>'; }).join('') + '</select></div>' +
+    '<div class="field"><label class="lbl">النموذج</label><select class="input" id="amodel">' +
+    MODELS.map(function (m) { return '<option value="' + m[0] + '"' + (ai.model === m[0] ? ' selected' : '') + '>' + m[1] + '</option>'; }).join('') +
+    (MODELS.every(function (m) { return m[0] !== ai.model; }) ? '<option selected value="' + esc(ai.model) + '">' + esc(ai.model) + '</option>' : '') +
+    '</select></div></div><div class="small muted">المفاتيح تُحفظ في إعدادات السكربت (Script Properties) ولا تظهر لأي مستخدم ولا تُرفع على GitHub.</div>' +
+    '<div class="row" style="margin-top:10px"><button class="btn" id="asave">حفظ</button><button class="btn ghost" id="atest">اختبار المفاتيح</button></div><div id="ares"></div></div>';
+}
+function kpi(label, value) { return '<div class="card kpi"><div class="l">' + esc(label) + '</div><div class="v num">' + esc(value) + '</div></div>'; }
+
+// ---------------- البدء ----------------
+if (state.token) {
+  api('auth.me').then(function (u) { state.user = u; if (u.company) window.COMPANY = u.company; renderShell(); }).catch(function () { logoutLocal(); });
+} else {
+  renderAuth();
+}
+})();
+</script>
