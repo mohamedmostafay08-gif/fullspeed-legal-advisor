@@ -50,6 +50,15 @@ function routes_() {
   'auth.logout':        [authLogout_, 'user'],
   'auth.me':            [authMe_, 'user'],
   'auth.changePassword':[authChangePassword_, 'user'],
+  'auth.google':        [authGoogle_, 'public'],
+  'auth.forgot':        [authForgot_, 'public'],
+  'auth.reset':         [authReset_, 'public'],
+  'auth.setEmail':      [authSetEmail_, 'user'],
+  // الرئيسية والمفضلة وإيه الجديد
+  'dash':               [dashboard_, 'user'],
+  'fav.toggle':         [favToggle_, 'user'],
+  'fav.list':           [favList_, 'user'],
+  'news':               [newsList_, 'user'],
   // السؤال والجواب
   'ask':                [askQuestion_, 'user'],
   'feedback':           [saveFeedback_, 'user'],
@@ -75,6 +84,7 @@ function routes_() {
   'admin.userToggle':   [adminUserToggle_, 'admin'],
   'admin.userPassword': [adminUserPassword_, 'admin'],
   'admin.userDelete':   [adminUserDelete_, 'admin'],
+  'admin.userEmail':    [adminUserEmail_, 'admin'],
   'admin.saveSettings': [adminSaveSettings_, 'admin'],
   'admin.saveApiKey':   [adminSaveApiKey_, 'admin'],
   'admin.testAi':       [adminTestAi_, 'admin'],

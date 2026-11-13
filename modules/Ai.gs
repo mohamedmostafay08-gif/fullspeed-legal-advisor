@@ -319,7 +319,7 @@ function adminOverview_() {
           hasPaid: !!PropertiesService.getScriptProperties().getProperty(AI_TIERS.paid[0]), mode: aiMode_(), model: aiModel_(),
           usedToday: usage.date === today ? (usage.count || 0) : 0, usedFree: usage.date === today ? (usage.free || 0) : 0,
           usedPaid: usage.date === today ? (usage.paid || 0) : 0 },
-    settings: { company_name: getSetting_('company_name', 'Full Speed'), insurance_limits: getSetting_('insurance_limits', {}) || {},
+    settings: { company_name: getSetting_('company_name', 'Full Speed'), google_client_id: getSetting_('google_client_id', '') || '', insurance_limits: getSetting_('insurance_limits', {}) || {},
                 payroll_tax: getSetting_('payroll_tax', {}) || {} },
     missingViolations: missingViolations_(),
     sheetUrl: ss_().getUrl()
@@ -331,6 +331,11 @@ function adminSaveSettings_(d) {
     var name = String(d.company_name).trim();
     if (name.length < 2 || name.length > 60) throw userError_('اسم الشركة غير صحيح');
     setSetting_('company_name', name);
+  }
+  if (d.google_client_id !== undefined) {
+    var cid = String(d.google_client_id).trim();
+    if (cid && !/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(cid)) throw userError_('شكل Client ID غير صحيح (ينتهي بـ apps.googleusercontent.com)');
+    setSetting_('google_client_id', cid);
   }
   if (d.ai_mode !== undefined) {
     if (!AI_MODES[d.ai_mode]) throw userError_('طريقة استخدام المفاتيح غير صحيحة');

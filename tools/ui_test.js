@@ -31,12 +31,25 @@ async function routeFonts(page) {
   await desk.screenshot({ path: OUT + '/g_setup.png' });
   await desk.fill('#sc', code);
   await desk.setInputFiles('#df', process.env.DATA_FILE);
-  await desk.fill('#fn', 'محمد مصطفى'); await desk.fill('#su', 'admin'); await desk.fill('#sp', 'Admin12345');
+  await desk.fill('#fn', 'محمد مصطفى'); await desk.fill('#su', 'admin@fullspeed.test'); await desk.fill('#sp', 'Admin12345');
   await desk.click('#go');
   await desk.waitForSelector('#login', { timeout: 90000 });
   await desk.screenshot({ path: OUT + '/g_login.png' });
-  await desk.fill('#u', 'admin'); await desk.fill('#p', 'Admin12345'); await desk.click('#go');
+  await desk.waitForTimeout(400);
+  await desk.fill('#p', 'Admin12345'); await desk.click('#go');
+  await desk.waitForSelector('#hq');
+  await desk.waitForTimeout(1300);
+  await desk.screenshot({ path: OUT + '/g_home.png' });
+  // البحث السريع Ctrl+K
+  await desk.keyboard.press('Control+k');
+  await desk.waitForSelector('#pq');
+  await desk.fill('#pq', 'الإجازة السنوية');
+  await desk.waitForSelector('#pl a .sub');
+  await desk.screenshot({ path: OUT + '/g_palette.png' });
+  await desk.keyboard.press('Escape');
+  await desk.click('.nav a[data-view=ask]');
   await desk.waitForSelector('#q');
+  await desk.waitForTimeout(500);
   await desk.screenshot({ path: OUT + '/g_ask_empty.png' });
 
   // الإدارة: إضافة مفتاح Gemini ومستخدم
@@ -44,10 +57,11 @@ async function routeFonts(page) {
   await desk.waitForSelector('#akey');
   await desk.fill('#akey', 'AIzaSyTEST_KEY_1234567890abcdef');
   await desk.click('#asave');
+  await desk.waitForSelector('.toast');
   await desk.waitForSelector('#nfn');
-  await desk.fill('#nfn', 'سارة الموارد البشرية'); await desk.fill('#nun', 'sara.hr'); await desk.fill('#npw', 'Sara12345');
+  await desk.fill('#nfn', 'سارة الموارد البشرية'); await desk.fill('#nun', 'sara@fullspeed.test'); await desk.fill('#npw', 'Sara12345');
   await desk.click('#nadd');
-  await desk.waitForFunction(() => document.body.innerText.includes('sara.hr'));
+  await desk.waitForFunction(() => document.body.innerText.includes('sara@fullspeed.test'));
   await desk.screenshot({ path: OUT + '/g_admin.png', fullPage: true });
 
   // السؤال + تنبيه البيانات الشخصية
@@ -58,11 +72,15 @@ async function routeFonts(page) {
   await desk.screenshot({ path: OUT + '/g_pii.png' });
   await desk.click('[data-a=redact]');
   await desk.waitForSelector('.answer');
-  await desk.screenshot({ path: OUT + '/g_answer.png', fullPage: true });
+  await desk.waitForTimeout(900);
+  await desk.screenshot({ path: OUT + '/g_answer.png' });
   const sent = await (await fetch(BASE + '/__state')).json();
   const sentText = JSON.stringify(sent.lastGemini.body);
   if (/أحمد سامي|29501011234567/.test(sentText)) errors.push('PII leaked to Gemini');
   await desk.click('.answer .chip');
+  await desk.waitForSelector('#favb');
+  await desk.click('#favb');
+  await desk.waitForSelector('#favb.on');
   await desk.waitForFunction(() => document.querySelector('.modal-h h3') && !document.querySelector('.modal-h h3').textContent.includes('التحميل'));
   await desk.screenshot({ path: OUT + '/g_article.png' });
   await desk.click('[data-close]');
@@ -76,6 +94,7 @@ async function routeFonts(page) {
   await desk.selectOption('#signer', 'manager');
   await desk.click('#calcp');
   await desk.waitForSelector('#pout .result-big');
+  if (!(await desk.$('#stp > div:nth-child(3).on'))) errors.push('stepper not at step 3');
   await desk.screenshot({ path: OUT + '/g_penalties.png', fullPage: true });
 
   // الحاسبات
@@ -132,13 +151,23 @@ async function routeFonts(page) {
   await mob.goto(BASE);
   await mob.waitForSelector('#login');
   await mob.screenshot({ path: OUT + '/m_login.png' });
-  await mob.fill('#u', 'sara.hr'); await mob.fill('#p', 'Sara12345'); await mob.click('#go');
+  await mob.fill('#u', 'sara@fullspeed.test'); await mob.fill('#p', 'Sara12345'); await mob.click('#go');
+  await mob.waitForSelector('#hq');
+  await mob.waitForTimeout(1300);
+  await mob.screenshot({ path: OUT + '/m_home.png' });
+  await mob.click('.bottomnav a[data-view=ask]');
   await mob.waitForSelector('#q');
   await mob.screenshot({ path: OUT + '/m_ask.png' });
   await mob.fill('#q', 'موظف مشي بدري من غير إذن للمرة الثانية');
   await mob.click('#send');
   await mob.waitForSelector('.answer');
-  await mob.screenshot({ path: OUT + '/m_answer.png', fullPage: true });
+  await mob.waitForTimeout(800);
+  await mob.screenshot({ path: OUT + '/m_answer.png' });
+  // الوضع الغامق
+  await mob.click('[data-theme-toggle]');
+  await mob.waitForTimeout(600);
+  await mob.screenshot({ path: OUT + '/m_dark.png' });
+  if (await mob.evaluate(() => document.documentElement.dataset.theme) !== 'dark') errors.push('theme toggle failed');
   await mob.click('.bottomnav a[data-view=penalties]');
   await mob.waitForSelector('.vitem');
   await mob.click('.vitem[data-n="6"]');

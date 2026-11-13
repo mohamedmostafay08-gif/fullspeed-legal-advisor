@@ -113,8 +113,15 @@ const Utilities = {
 
 // ---------------- Gemini (محاكاة) ----------------
 let geminiCalls = [];
+const sentMails = [];
 const UrlFetchApp = {
   fetch(url, opt) {
+    // التحقق من رمز Google: الرمز التجريبي "x.<base64 JSON>.y" ومحتواه يُعاد كما هو
+    if (url.startsWith('https://oauth2.googleapis.com/tokeninfo')) {
+      const tok = decodeURIComponent((url.split('id_token=')[1] || ''));
+      try { const info = JSON.parse(Buffer.from(tok.split('.')[1], 'base64url').toString()); return { getResponseCode: () => 200, getContentText: () => JSON.stringify(info) }; }
+      catch (e) { return { getResponseCode: () => 400, getContentText: () => '{"error":"invalid_token"}' }; }
+    }
     const mode = process.env.GEMINI_MODE || 'ok';
     const body = JSON.parse(opt.payload);
     geminiCalls.push({ url, headers: opt.headers, body });
@@ -188,6 +195,7 @@ const ctx = vm.createContext({
   CacheService: { getScriptCache: () => cache }, PropertiesService: { getScriptProperties: () => propsSvc },
   LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
   Utilities, UrlFetchApp, DriveApp, DocumentApp, HtmlService: {},
+  MailApp: { sentMails, sendEmail: m => { sentMails.push(m); }, getRemainingDailyQuota: () => 100 },
   ContentService: { MimeType: { JSON: 'json' }, createTextOutput: s => ({ text: s, setMimeType() { return this; } }) }
 });
 vm.runInContext(fs.readFileSync(path.join(SRC, 'Code.gs'), 'utf8'), ctx, { filename: 'Code.gs' });
@@ -251,4 +259,4 @@ if (require.main === module) {
   }).listen(PORT, () => console.log('harness on ' + PORT));
 }
 
-module.exports = { ctx, callApi, sheets, cacheStore, props, geminiCalls, createdDocs, seed };
+module.exports = { ctx, callApi, sheets, cacheStore, props, geminiCalls, createdDocs, seed, sentMails };

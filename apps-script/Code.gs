@@ -64,6 +64,15 @@ function routes_() {
   'auth.logout':        [authLogout_, 'user'],
   'auth.me':            [authMe_, 'user'],
   'auth.changePassword':[authChangePassword_, 'user'],
+  'auth.google':        [authGoogle_, 'public'],
+  'auth.forgot':        [authForgot_, 'public'],
+  'auth.reset':         [authReset_, 'public'],
+  'auth.setEmail':      [authSetEmail_, 'user'],
+  // الرئيسية والمفضلة وإيه الجديد
+  'dash':               [dashboard_, 'user'],
+  'fav.toggle':         [favToggle_, 'user'],
+  'fav.list':           [favList_, 'user'],
+  'news':               [newsList_, 'user'],
   // السؤال والجواب
   'ask':                [askQuestion_, 'user'],
   'feedback':           [saveFeedback_, 'user'],
@@ -89,6 +98,7 @@ function routes_() {
   'admin.userToggle':   [adminUserToggle_, 'admin'],
   'admin.userPassword': [adminUserPassword_, 'admin'],
   'admin.userDelete':   [adminUserDelete_, 'admin'],
+  'admin.userEmail':    [adminUserEmail_, 'admin'],
   'admin.saveSettings': [adminSaveSettings_, 'admin'],
   'admin.saveApiKey':   [adminSaveApiKey_, 'admin'],
   'admin.testAi':       [adminTestAi_, 'admin'],
@@ -159,7 +169,7 @@ var SHEETS = {
   Sources:   ['id', 'title', 'short', 'citation', 'pdf', 'notes'],
   Articles:  ['source', 'num', 'label', 'chapter', 'page', 'also_contains', 'text'],
   Penalties: ['num', 'section', 'text', 'case_label', 'first', 'second', 'third', 'fourth', 'uncertain', 'page', 'manual', 'entered_by', 'entered_at'],
-  Users:     ['username', 'full_name', 'role', 'salt', 'hash', 'active', 'created_at', 'last_login'],
+  Users:     ['username', 'full_name', 'role', 'salt', 'hash', 'active', 'created_at', 'last_login', 'email', 'favorites'],
   Questions: ['id', 'time', 'username', 'mode', 'question', 'provider', 'model', 'answer_json', 'verification_json', 'feedback', 'feedback_note', 'redactions'],
   Documents: ['time', 'username', 'doc_type', 'employee', 'doc_url', 'pdf_url'],
   Settings:  ['key', 'value']
@@ -176,9 +186,17 @@ function sheet_(name) {
     sh.getRange(1, 1, 1, SHEETS[name].length).setValues([SHEETS[name]]).setFontWeight('bold');
     sh.setFrozenRows(1);
     sh.setRightToLeft(false); // الجداول من الشمال لليمين
+  } else if (!sheet_.checked[name]) {
+    // ترقية: إضافة الأعمدة الجديدة لجداول قديمة (تُضاف دائماً في آخر الجدول)
+    var head = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0];
+    var missing = SHEETS[name].filter(function (h) { return head.indexOf(h) < 0; });
+    if (missing.length) sh.getRange(1, head.filter(String).length + 1, 1, missing.length).setValues([missing]).setFontWeight('bold');
   }
+  sheet_.checked[name] = true;
   return sh;
 }
+
+sheet_.checked = {};
 
 function ensureSheets_() {
   Object.keys(SHEETS).forEach(function (n) { sheet_(n); });
@@ -203,8 +221,9 @@ function readRows_(name) {
 }
 
 function appendRow_(name, obj) {
-  var head = SHEETS[name];
-  sheet_(name).appendRow(head.map(function (h) { return obj[h] === undefined ? '' : obj[h]; }));
+  var sh = sheet_(name);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]; // ترتيب أعمدة الجدول الفعلي
+  sh.appendRow(head.map(function (h) { return obj[h] === undefined ? '' : obj[h]; }));
 }
 
 function updateRow_(name, rowNum, obj) {
@@ -357,7 +376,9 @@ function cacheClearBig_(key) {
 
 /**
  * الحسابات والدخول.
- * - المستخدمون يُنشئهم مدير النظام فقط (اسم مستخدم + كلمة مرور)، بحد أقصى 5 حسابات.
+ * - المستخدمون يُنشئهم مدير النظام فقط (إيميل + كلمة مرور)، بحد أقصى 5 حسابات.
+ * - الدخول بالإيميل وكلمة المرور، أو بزر "الدخول بحساب Google" (للإيميلات المسجلة فقط).
+ * - "نسيت كلمة المرور": كود من 6 أرقام يُرسل للإيميل صالح 15 دقيقة.
  * - كلمات المرور تُخزن مشفّرة (SHA-256 مكرر مع ملح عشوائي)، ولا تُخزن كنص أبداً.
  * - الجلسة: رمز عشوائي صالح 6 ساعات من آخر استخدام.
  * - بعد 5 محاولات دخول خاطئة يُقفل الحساب 15 دقيقة.
@@ -393,9 +414,46 @@ function findUser_(username) {
   return null;
 }
 
+/** يبحث بالإيميل أولاً ثم باسم المستخدم (للحسابات القديمة). */
+function findLogin_(id) {
+  id = String(id || '').trim().toLowerCase();
+  if (!id) return null;
+  var rows = readRows_('Users');
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].email || '').toLowerCase() === id) return rows[i];
+  return id.indexOf('@') < 0 ? findUser_(id) : null;
+}
+
+function isActive_(u) { return u.active === true || u.active === 'TRUE'; }
+
+function validateEmail_(e) {
+  e = String(e || '').trim().toLowerCase();
+  if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(e) || e.length > 120) throw userError_('اكتب إيميل صحيح');
+  return e;
+}
+
+function emailTaken_(email, exceptUsername) {
+  return readRows_('Users').some(function (r) { return String(r.email || '').toLowerCase() === email && r.username !== exceptUsername; });
+}
+
+/** اسم مستخدم داخلي فريد من الإيميل (يُستخدم في السجلات فقط). */
+function usernameFromEmail_(email) {
+  var base = email.split('@')[0].replace(/[^a-z0-9._-]/g, '').slice(0, 24) || 'user';
+  if (base.length < 3) base = base + 'usr';
+  var name = base, n = 2;
+  while (findUser_(name)) name = base + n++;
+  return name;
+}
+
 function publicUser_(u) {
-  return { username: u.username, full_name: u.full_name, role: u.role, active: u.active === true || u.active === 'TRUE',
+  return { username: u.username, email: String(u.email || ''), full_name: u.full_name, role: u.role, active: isActive_(u),
            created_at: u.created_at ? String(u.created_at) : '', last_login: u.last_login ? String(u.last_login) : '' };
+}
+
+function startSession_(u) {
+  var token = newToken_();
+  CacheService.getScriptCache().put('sess_' + token, u.username, SESSION_SECONDS);
+  updateRow_('Users', u._row, { last_login: new Date() });
+  return { token: token, user: publicUser_(u) };
 }
 
 function validatePassword_(p) {
@@ -415,7 +473,7 @@ function sessionUser_(token) {
   var username = cache.get('sess_' + token);
   if (!username) return null;
   var u = findUser_(username);
-  if (!u || !(u.active === true || u.active === 'TRUE')) return null;
+  if (!u || !isActive_(u)) return null;
   cache.put('sess_' + token, username, SESSION_SECONDS); // تجديد مدة الجلسة مع كل استخدام
   return publicUser_(u);
 }
@@ -430,7 +488,8 @@ function newToken_() {
 
 function authStatus_() {
   ensureSheets_();
-  return { hasUsers: readRows_('Users').length > 0, hasData: hasData_(), company: getSetting_('company_name', 'Full Speed') };
+  return { hasUsers: readRows_('Users').length > 0, hasData: hasData_(), company: getSetting_('company_name', 'Full Speed'),
+           googleClientId: getSetting_('google_client_id', '') || '' };
 }
 
 function checkSetupCode_(given) {
@@ -462,14 +521,14 @@ function authSetup_(d) {
   lock.waitLock(30000);
   try {
     checkSetupCode_(d.setupCode);
-    validateUsername_(d.username);
+    var email = validateEmail_(d.email);
     validatePassword_(d.password);
     if (!d.fullName || String(d.fullName).trim().length < 2) throw userError_('اكتب الاسم الكامل');
     var imported = null;
     if (d.dataParts) imported = importData_(assembleUpload_('setup_up_', parseInt(d.dataParts, 10)));
     else if (!hasData_()) throw userError_('اختر ملف البيانات FullSpeed_Legal_Data.json');
     var salt = newSalt_();
-    appendRow_('Users', { username: d.username.trim().toLowerCase(), full_name: d.fullName.trim(), role: 'admin',
+    appendRow_('Users', { username: usernameFromEmail_(email), email: email, full_name: d.fullName.trim(), role: 'admin',
                           salt: salt, hash: hashPassword_(d.password, salt), active: true, created_at: new Date() });
     PropertiesService.getScriptProperties().deleteProperty('SETUP_CODE');
     return { done: true, imported: imported };
@@ -479,23 +538,107 @@ function authSetup_(d) {
 }
 
 function authLogin_(d) {
-  var username = String(d.username || '').trim().toLowerCase();
+  var id = String(d.email || d.username || '').trim().toLowerCase();
   var cache = CacheService.getScriptCache();
-  var failKey = 'fail_' + username;
+  var failKey = 'fail_' + id;
   var fails = parseInt(cache.get(failKey) || '0', 10);
   if (fails >= 5) throw userError_('تم إيقاف الدخول لهذا الحساب 15 دقيقة بسبب محاولات خاطئة متكررة');
-  var u = findUser_(username);
-  var ok = u && (u.active === true || u.active === 'TRUE') && safeEqual_(hashPassword_(String(d.password || ''), u.salt), u.hash);
+  var u = findLogin_(id);
+  var ok = u && isActive_(u) && safeEqual_(hashPassword_(String(d.password || ''), u.salt), u.hash);
   if (!ok) {
     cache.put(failKey, String(fails + 1), 900);
     Utilities.sleep(600);
-    throw userError_('اسم المستخدم أو كلمة المرور غير صحيحة');
+    throw userError_('الإيميل أو كلمة المرور غير صحيحة');
   }
   cache.remove(failKey);
-  var token = newToken_();
-  cache.put('sess_' + token, u.username, SESSION_SECONDS);
-  updateRow_('Users', u._row, { last_login: new Date() });
-  return { token: token, user: publicUser_(u) };
+  return startSession_(u);
+}
+
+/** الدخول بحساب Google: يتحقق من الرمز عند Google نفسها، ثم يطابق الإيميل مع حساب موجود. */
+function authGoogle_(d) {
+  var clientId = getSetting_('google_client_id', '');
+  if (!clientId) throw userError_('الدخول بحساب Google غير مفعّل');
+  var cred = String(d.credential || '');
+  if (!/^[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+$/.test(cred)) throw userError_('بيانات الدخول من Google غير صالحة');
+  var res = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(cred), { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw userError_('تعذر التحقق من حساب Google، حاول مرة أخرى');
+  var info = JSON.parse(res.getContentText());
+  var issOk = info.iss === 'accounts.google.com' || info.iss === 'https://accounts.google.com';
+  var verified = info.email_verified === true || info.email_verified === 'true';
+  if (info.aud !== clientId || !issOk || !verified || Number(info.exp) * 1000 < Date.now()) throw userError_('تعذر التحقق من حساب Google');
+  var u = findLogin_(String(info.email || '').toLowerCase());
+  if (!u || String(u.email || '').toLowerCase() !== String(info.email).toLowerCase()) throw userError_('هذا الإيميل غير مسجل في البرنامج. اطلب من مدير النظام إضافته.');
+  if (!isActive_(u)) throw userError_('هذا الحساب موقوف');
+  return startSession_(u);
+}
+
+/** نسيت كلمة المرور: يرسل كوداً للإيميل (الرد واحد دائماً حتى لا يكشف الإيميلات المسجلة). */
+function authForgot_(d) {
+  var email = validateEmail_(d.email);
+  var cache = CacheService.getScriptCache();
+  if (cache.get('rsent_' + email)) return { sent: true }; // كود واحد كل دقيقتين
+  var u = findLogin_(email);
+  if (u && isActive_(u) && String(u.email || '').toLowerCase() === email) {
+    var code = String(100000 + Math.floor(Math.random() * 900000));
+    var salt = newSalt_();
+    cache.put('reset_' + email, JSON.stringify({ salt: salt, hash: hashPassword_(code, salt), tries: 0 }), 900);
+    cache.put('rsent_' + email, '1', 120);
+    MailApp.sendEmail({
+      to: email,
+      subject: 'كود استعادة كلمة المرور — المستشار القانوني',
+      htmlBody: '<div dir="rtl" style="font-family:Tahoma,Arial;font-size:15px">مرحباً ' + escHtml_(u.full_name) + '،<br><br>' +
+        'كود استعادة كلمة المرور:<div style="font-size:28px;font-weight:bold;letter-spacing:6px;margin:12px 0">' + code + '</div>' +
+        'صالح لمدة 15 دقيقة. إذا لم تطلب ذلك تجاهل هذه الرسالة.<br><br>' + escHtml_(getSetting_('company_name', 'Full Speed')) + ' · المستشار القانوني</div>',
+      name: 'المستشار القانوني'
+    });
+  }
+  return { sent: true };
+}
+
+function authReset_(d) {
+  var email = validateEmail_(d.email);
+  var cache = CacheService.getScriptCache();
+  var raw = cache.get('reset_' + email);
+  if (!raw) throw userError_('الكود غير صحيح أو انتهت صلاحيته. اطلب كوداً جديداً.');
+  var r = JSON.parse(raw);
+  if (r.tries >= 5) { cache.remove('reset_' + email); throw userError_('محاولات كثيرة. اطلب كوداً جديداً.'); }
+  if (!safeEqual_(hashPassword_(String(d.code || '').trim(), r.salt), r.hash)) {
+    r.tries++; cache.put('reset_' + email, JSON.stringify(r), 900);
+    throw userError_('الكود غير صحيح');
+  }
+  validatePassword_(d.password);
+  var u = findLogin_(email);
+  if (!u) throw userError_('الحساب غير موجود');
+  var salt = newSalt_();
+  updateRow_('Users', u._row, { salt: salt, hash: hashPassword_(d.password, salt) });
+  cache.remove('reset_' + email);
+  cache.remove('fail_' + email);
+  return startSession_(findLogin_(email));
+}
+
+/** ربط أو تغيير إيميل الحساب (للحسابات القديمة التي أُنشئت باسم مستخدم). */
+function authSetEmail_(d, user) {
+  var email = validateEmail_(d.email);
+  if (emailTaken_(email, user.username)) throw userError_('هذا الإيميل مستخدم لحساب آخر');
+  var u = findUser_(user.username);
+  updateRow_('Users', u._row, { email: email });
+  return { email: email };
+}
+
+function escHtml_(s) {
+  return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+/**
+ * شغّل هذه الدالة مرة واحدة من محرر Apps Script بعد التحديث (زر Run) لمنح صلاحية إرسال الإيميلات
+ * (لكود "نسيت كلمة المرور") والاتصال بخدمات Google للتحقق من الدخول.
+ */
+function authorizeEmail() {
+  console.log('الإيميلات المتبقية اليوم: ' + MailApp.getRemainingDailyQuota());
+  UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo', { muteHttpExceptions: true });
+  console.log('تم منح الصلاحيات بنجاح');
 }
 
 function authLogout_(d, user, token) {
@@ -527,12 +670,12 @@ function adminUserCreate_(d) {
   try {
     var users = readRows_('Users');
     if (users.length >= MAX_USERS) throw userError_('الحد الأقصى ' + MAX_USERS + ' حسابات. احذف أو عدّل حساباً موجوداً.');
-    validateUsername_(d.username);
+    var email = validateEmail_(d.email);
     validatePassword_(d.password);
-    if (findUser_(d.username)) throw userError_('اسم المستخدم موجود بالفعل');
+    if (emailTaken_(email)) throw userError_('هذا الإيميل مسجل بالفعل');
     if (!d.fullName || String(d.fullName).trim().length < 2) throw userError_('اكتب الاسم الكامل');
     var salt = newSalt_();
-    appendRow_('Users', { username: d.username.trim().toLowerCase(), full_name: String(d.fullName).trim(),
+    appendRow_('Users', { username: usernameFromEmail_(email), email: email, full_name: String(d.fullName).trim(),
                           role: d.role === 'admin' ? 'admin' : 'user', salt: salt, hash: hashPassword_(d.password, salt),
                           active: true, created_at: new Date() });
     return { done: true };
@@ -556,6 +699,15 @@ function adminUserPassword_(d) {
   validatePassword_(d.password);
   var salt = newSalt_();
   updateRow_('Users', u._row, { salt: salt, hash: hashPassword_(d.password, salt) });
+  return { done: true };
+}
+
+function adminUserEmail_(d) {
+  var u = findUser_(d.username);
+  if (!u) throw userError_('المستخدم غير موجود');
+  var email = validateEmail_(d.email);
+  if (emailTaken_(email, u.username)) throw userError_('هذا الإيميل مستخدم لحساب آخر');
+  updateRow_('Users', u._row, { email: email });
   return { done: true };
 }
 
@@ -1540,6 +1692,7 @@ function adminPenSave_(d, admin) {
   sortPenalties_();
   violations_.memo = null;
   kbReset_();
+  newsLog_(admin.full_name, (old ? 'تعديل' : 'إضافة') + ' المخالفة ' + num + ' في لائحة الجزاءات', { source: 'penreg', num: String(num) });
   return { done: true };
 }
 
@@ -2219,7 +2372,7 @@ function adminOverview_() {
           hasPaid: !!PropertiesService.getScriptProperties().getProperty(AI_TIERS.paid[0]), mode: aiMode_(), model: aiModel_(),
           usedToday: usage.date === today ? (usage.count || 0) : 0, usedFree: usage.date === today ? (usage.free || 0) : 0,
           usedPaid: usage.date === today ? (usage.paid || 0) : 0 },
-    settings: { company_name: getSetting_('company_name', 'Full Speed'), insurance_limits: getSetting_('insurance_limits', {}) || {},
+    settings: { company_name: getSetting_('company_name', 'Full Speed'), google_client_id: getSetting_('google_client_id', '') || '', insurance_limits: getSetting_('insurance_limits', {}) || {},
                 payroll_tax: getSetting_('payroll_tax', {}) || {} },
     missingViolations: missingViolations_(),
     sheetUrl: ss_().getUrl()
@@ -2231,6 +2384,11 @@ function adminSaveSettings_(d) {
     var name = String(d.company_name).trim();
     if (name.length < 2 || name.length > 60) throw userError_('اسم الشركة غير صحيح');
     setSetting_('company_name', name);
+  }
+  if (d.google_client_id !== undefined) {
+    var cid = String(d.google_client_id).trim();
+    if (cid && !/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(cid)) throw userError_('شكل Client ID غير صحيح (ينتهي بـ apps.googleusercontent.com)');
+    setSetting_('google_client_id', cid);
   }
   if (d.ai_mode !== undefined) {
     if (!AI_MODES[d.ai_mode]) throw userError_('طريقة استخدام المفاتيح غير صحيحة');
@@ -2415,7 +2573,7 @@ function checkEditableSource_(id) {
 }
 
 /** إضافة مرجع جديد أو تعديل بيانات مرجع موجود. */
-function adminSourceSave_(d) {
+function adminSourceSave_(d, admin) {
   var id = String(d.id || '').trim().toLowerCase();
   var title = String(d.title || '').trim(), short = String(d.short || '').trim();
   if (!title || title.length < 4) throw userError_('اكتب اسم القانون أو اللائحة كاملاً');
@@ -2435,18 +2593,21 @@ function adminSourceSave_(d) {
                                          notes: String(d.notes || '').trim() });
   }
   kbReset_();
+  newsLog_(admin && admin.full_name, (d.isNew ? 'إضافة مرجع جديد: ' : 'تعديل بيانات: ') + title, { source: id });
   return { done: true, id: id };
 }
 
 /** حذف مرجع أضافه المدير مع كل مواده (المراجع الأساسية لا تُحذف). */
-function adminSourceDelete_(d) {
+function adminSourceDelete_(d, admin) {
   var id = checkEditableSource_(d.id);
+  var title = kbData_().sources[id].short;
   if (SOURCE_ORDER.indexOf(id) >= 0) throw userError_('لا يمكن حذف المراجع الأساسية، يمكنك تعديل موادها فقط');
   deleteArticleRows_(function (r) { return String(r.source) === id; });
   var src = readRows_('Sources').filter(function (r) { return String(r.id) === id; });
   src.map(function (r) { return r._row; }).sort(function (a, b) { return b - a; })
     .forEach(function (row) { sheet_('Sources').deleteRow(row); });
   kbReset_();
+  newsLog_(admin && admin.full_name, 'حذف مرجع: ' + title);
   return { done: true };
 }
 
@@ -2462,7 +2623,7 @@ function deleteArticleRows_(pred) {
  * d.articles: [{num,label,chapter,text}] — المادة الموجودة بنفس الرقم تُستبدل، والجديدة تُضاف.
  * d.origNum: عند تعديل رقم مادة موجودة.
  */
-function adminArticlesSave_(d) {
+function adminArticlesSave_(d, admin) {
   var source = checkEditableSource_(d.source);
   var list = (d.articles || []).map(cleanArticleInput_);
   if (!list.length) throw userError_('لا توجد مواد للحفظ');
@@ -2500,21 +2661,102 @@ function adminArticlesSave_(d) {
       sh.getRange(sh.getLastRow() + 1, 1, fresh.length, head.length).setNumberFormat('@').setValues(fresh);
     }
     kbReset_();
+    var sh2 = kbData_().sources[source].short;
+    newsLog_(admin && admin.full_name, list.length === 1
+      ? (added ? 'إضافة ' : 'تعديل ') + (list[0].label || 'مادة ' + list[0].num) + ' — ' + sh2
+      : 'إضافة ' + added + ' وتعديل ' + updated + ' مادة — ' + sh2, list.length === 1 ? { source: source, num: list[0].num } : { source: source });
     return { added: added, updated: updated };
   } finally {
     lock.releaseLock();
   }
 }
 
-function adminArticleDelete_(d) {
+function adminArticleDelete_(d, admin) {
   var source = checkEditableSource_(d.source), num = normNum_(d.num);
   var n = deleteArticleRows_(function (r) { return String(r.source) === source && normNum_(r.num) === num; });
   if (!n) throw userError_('المادة غير موجودة');
   kbReset_();
+  newsLog_(admin && admin.full_name, 'حذف المادة ' + num + ' — ' + kbData_().sources[source].short);
   return { done: true };
 }
 
 /** رفع جزء من صورة/PDF (base64) لاستخراج نصه. */
 function adminExtractUpload_(d, admin) {
   return uploadChunk_('ext_' + admin.username + '_', d);
+}
+
+
+// ############################################################################
+// ## Extras
+// ############################################################################
+
+/**
+ * إضافات الاستخدام اليومي: الصفحة الرئيسية، المفضلة، و"إيه الجديد" (سجل تعديلات القوانين).
+ */
+
+// ---------------- إيه الجديد ----------------
+
+/** يسجل تعديلاً على القوانين ليظهر للمستخدمين في "إيه الجديد" (آخر 40 تعديل). */
+function newsLog_(by, text, ref) {
+  try {
+    var list = getSetting_('changelog', []) || [];
+    list.unshift({ t: new Date().toISOString(), by: String(by || ''), text: String(text).slice(0, 200), ref: ref || null });
+    setSetting_('changelog', list.slice(0, 40));
+  } catch (e) { console.warn('newsLog failed: ' + e); }
+}
+
+function newsList_() {
+  return { items: (getSetting_('changelog', []) || []).slice(0, 20) };
+}
+
+// ---------------- المفضلة ----------------
+
+function favKeys_(u) {
+  try { var a = JSON.parse(u.favorites || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+
+function favToggle_(d, user) {
+  var a = getArticle_(d.source, d.num);
+  if (!a) throw userError_('المادة غير موجودة');
+  var key = a.source + '|' + a.num;
+  var u = findUser_(user.username);
+  var keys = favKeys_(u), i = keys.indexOf(key), on = i < 0;
+  if (on) keys.unshift(key); else keys.splice(i, 1);
+  if (keys.length > 150) throw userError_('وصلت للحد الأقصى للمفضلة (150 مادة)');
+  updateRow_('Users', u._row, { favorites: JSON.stringify(keys) });
+  return { on: on, keys: keys };
+}
+
+function favList_(d, user) {
+  var keys = favKeys_(findUser_(user.username)), shorts = sourceShorts_();
+  return { keys: keys, items: keys.map(function (k) {
+    var p = k.split('|'), a = getArticle_(p[0], p[1]);
+    return a ? { source: a.source, num: a.num, label: a.label, short: shorts[a.source], snippet: a.text.slice(0, 180) } : null;
+  }).filter(Boolean) };
+}
+
+// ---------------- الصفحة الرئيسية ----------------
+
+function dashboard_(d, user) {
+  var qs = readRows_('Questions');
+  var month = Utilities.formatDate(new Date(), 'Africa/Cairo', 'yyyy-MM');
+  var mine = qs.filter(function (r) { return r.username === user.username; });
+  var inMonth = function (r) { return Utilities.formatDate(new Date(r.time), 'Africa/Cairo', 'yyyy-MM') === month; };
+  var sources = kbSources_();
+  var total = 0;
+  sources.forEach(function (s) { total += s.count; });
+  return {
+    stats: {
+      articles: total, sources: sources.length, violations: violations_().length,
+      myMonth: mine.filter(inMonth).length, myTotal: mine.length,
+      teamMonth: user.role === 'admin' ? qs.filter(inMonth).length : null
+    },
+    recent: mine.slice(-5).reverse().map(function (r) {
+      return { id: String(r.id), question: String(r.question).slice(0, 140), time: Utilities.formatDate(new Date(r.time), 'Africa/Cairo', 'yyyy-MM-dd HH:mm') };
+    }),
+    sources: sources.map(function (s) { return { id: s.id, short: s.short, count: s.count }; }),
+    news: (getSetting_('changelog', []) || []).slice(0, 6),
+    favorites: favKeys_(findUser_(user.username)).length,
+    ai: !!aiKey_()
+  };
 }

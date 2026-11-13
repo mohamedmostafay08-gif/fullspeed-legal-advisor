@@ -59,7 +59,7 @@ function checkEditableSource_(id) {
 }
 
 /** إضافة مرجع جديد أو تعديل بيانات مرجع موجود. */
-function adminSourceSave_(d) {
+function adminSourceSave_(d, admin) {
   var id = String(d.id || '').trim().toLowerCase();
   var title = String(d.title || '').trim(), short = String(d.short || '').trim();
   if (!title || title.length < 4) throw userError_('اكتب اسم القانون أو اللائحة كاملاً');
@@ -79,18 +79,21 @@ function adminSourceSave_(d) {
                                          notes: String(d.notes || '').trim() });
   }
   kbReset_();
+  newsLog_(admin && admin.full_name, (d.isNew ? 'إضافة مرجع جديد: ' : 'تعديل بيانات: ') + title, { source: id });
   return { done: true, id: id };
 }
 
 /** حذف مرجع أضافه المدير مع كل مواده (المراجع الأساسية لا تُحذف). */
-function adminSourceDelete_(d) {
+function adminSourceDelete_(d, admin) {
   var id = checkEditableSource_(d.id);
+  var title = kbData_().sources[id].short;
   if (SOURCE_ORDER.indexOf(id) >= 0) throw userError_('لا يمكن حذف المراجع الأساسية، يمكنك تعديل موادها فقط');
   deleteArticleRows_(function (r) { return String(r.source) === id; });
   var src = readRows_('Sources').filter(function (r) { return String(r.id) === id; });
   src.map(function (r) { return r._row; }).sort(function (a, b) { return b - a; })
     .forEach(function (row) { sheet_('Sources').deleteRow(row); });
   kbReset_();
+  newsLog_(admin && admin.full_name, 'حذف مرجع: ' + title);
   return { done: true };
 }
 
@@ -106,7 +109,7 @@ function deleteArticleRows_(pred) {
  * d.articles: [{num,label,chapter,text}] — المادة الموجودة بنفس الرقم تُستبدل، والجديدة تُضاف.
  * d.origNum: عند تعديل رقم مادة موجودة.
  */
-function adminArticlesSave_(d) {
+function adminArticlesSave_(d, admin) {
   var source = checkEditableSource_(d.source);
   var list = (d.articles || []).map(cleanArticleInput_);
   if (!list.length) throw userError_('لا توجد مواد للحفظ');
@@ -144,17 +147,22 @@ function adminArticlesSave_(d) {
       sh.getRange(sh.getLastRow() + 1, 1, fresh.length, head.length).setNumberFormat('@').setValues(fresh);
     }
     kbReset_();
+    var sh2 = kbData_().sources[source].short;
+    newsLog_(admin && admin.full_name, list.length === 1
+      ? (added ? 'إضافة ' : 'تعديل ') + (list[0].label || 'مادة ' + list[0].num) + ' — ' + sh2
+      : 'إضافة ' + added + ' وتعديل ' + updated + ' مادة — ' + sh2, list.length === 1 ? { source: source, num: list[0].num } : { source: source });
     return { added: added, updated: updated };
   } finally {
     lock.releaseLock();
   }
 }
 
-function adminArticleDelete_(d) {
+function adminArticleDelete_(d, admin) {
   var source = checkEditableSource_(d.source), num = normNum_(d.num);
   var n = deleteArticleRows_(function (r) { return String(r.source) === source && normNum_(r.num) === num; });
   if (!n) throw userError_('المادة غير موجودة');
   kbReset_();
+  newsLog_(admin && admin.full_name, 'حذف المادة ' + num + ' — ' + kbData_().sources[source].short);
   return { done: true };
 }
 

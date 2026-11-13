@@ -2,7 +2,7 @@
 const assert = require('assert');
 process.argv[2] = process.argv[2] || process.env.DATA_FILE || __dirname + '/../data/FullSpeed_Legal_Data.json';
 const H = require('./harness');
-const { ctx, callApi, sheets, geminiCalls, createdDocs } = H;
+const { ctx, callApi, sheets, geminiCalls, createdDocs, sentMails } = H;
 
 let pass = 0;
 function t(name, fn) {
@@ -15,23 +15,23 @@ const fail = (r, re) => { if (r.ok) throw new Error('expected failure'); if (re 
 let admin, user;
 
 t('status before setup', () => { const s = ok(call('auth.status')); assert.strictEqual(s.hasUsers, false); });
-t('setup requires code', () => { fail(call('auth.setup', { setupCode: 'X', fullName: 'مدير', username: 'admin', password: 'Admin12345' }), /كود الإعداد/); });
+t('setup requires code', () => { fail(call('auth.setup', { setupCode: 'X', fullName: 'مدير', email: 'admin@fs.com', password: 'Admin12345' }), /كود الإعداد/); });
 t('setup with code', () => {
   const code = ctx.createSetupCode();
-  ok(call('auth.setup', { setupCode: code, fullName: 'مدير النظام', username: 'Admin', password: 'Admin12345' }));
-  fail(call('auth.setup', { setupCode: code, fullName: 'x', username: 'x2', password: 'Admin12345' }), /بالفعل/);
+  ok(call('auth.setup', { setupCode: code, fullName: 'مدير النظام', email: 'Admin@FS.com', password: 'Admin12345' }));
+  fail(call('auth.setup', { setupCode: code, fullName: 'x', email: 'x2@fs.com', password: 'Admin12345' }), /بالفعل/);
 });
 t('password stored hashed', () => { const row = sheets.Users.data[1]; assert.ok(!row.join('|').includes('Admin12345')); assert.ok(row[4].length > 20); });
 t('login wrong password', () => { fail(call('auth.login', { username: 'admin', password: 'nope1234' }), /غير صحيحة/); });
-t('login ok (case-insensitive username)', () => { admin = ok(call('auth.login', { username: 'ADMIN', password: 'Admin12345' })).token; assert.ok(/^[a-f0-9]{48}$/.test(admin)); });
+t('login ok (case-insensitive email)', () => { admin = ok(call('auth.login', { email: 'ADMIN@fs.com', password: 'Admin12345' })).token; assert.ok(/^[a-f0-9]{48}$/.test(admin)); });
 t('protected route without token', () => { const r = call('kb.sources', {}, 'bad'); assert.strictEqual(r.auth, false); });
 t('create users up to 5', () => {
-  for (let i = 1; i <= 4; i++) ok(call('admin.userCreate', { fullName: 'مستخدم ' + i, username: 'user' + i, password: 'Pass1234' + i, role: 'user' }, admin), 'create ' + i);
-  fail(call('admin.userCreate', { fullName: 'زائد', username: 'user5', password: 'Pass12345', role: 'user' }, admin), /الحد الأقصى/);
+  for (let i = 1; i <= 4; i++) ok(call('admin.userCreate', { fullName: 'مستخدم ' + i, email: 'user' + i + '@fs.com', password: 'Pass1234' + i, role: 'user' }, admin), 'create ' + i);
+  fail(call('admin.userCreate', { fullName: 'زائد', email: 'user5@fs.com', password: 'Pass12345', role: 'user' }, admin), /الحد الأقصى/);
 });
 t('weak password rejected', () => {
   ok(call('admin.userDelete', { username: 'user4' }, admin));
-  fail(call('admin.userCreate', { fullName: 'ضعيف', username: 'weak', password: 'abcdefgh' }, admin), /أرقام وحروف/);
+  fail(call('admin.userCreate', { fullName: 'ضعيف', email: 'weak@fs.com', password: 'abcdefgh' }, admin), /أرقام وحروف/);
 });
 t('user login + admin route forbidden', () => {
   user = ok(call('auth.login', { username: 'user1', password: 'Pass12341' })).token;
@@ -243,6 +243,65 @@ t('doPost (GitHub Pages app) uses same api + auth', () => {
   assert.strictEqual(post({ action: 'admin.overview', token: user }).ok, false);
   assert.strictEqual(JSON.parse(ctx.doPost({ postData: { contents: 'not json' } }).text).ok, false);
   assert.match(ok(call('auth.me', {}, user)).company, /\S/);
+});
+t('email login, google sign-in, forgot/reset, set email', () => {
+  ok(call('auth.login', { email: 'user1@fs.com', password: 'Pass12341' }));
+  fail(call('admin.userCreate', { fullName: 'مكرر', email: 'USER1@fs.com', password: 'Pass12345' }, admin), /مسجل بالفعل/);
+  fail(call('admin.userCreate', { fullName: 'غلط', email: 'not-an-email', password: 'Pass12345' }, admin), /إيميل صحيح/);
+  // Google
+  fail(call('auth.google', { credential: 'a.b.c' }), /غير مفعّل/);
+  fail(call('admin.saveSettings', { google_client_id: 'abc' }, admin), /Client ID/);
+  const CID = '123456-abcdef.apps.googleusercontent.com';
+  ok(call('admin.saveSettings', { google_client_id: CID }, admin));
+  assert.strictEqual(ok(call('auth.status')).googleClientId, CID);
+  const jwt = info => 'h.' + Buffer.from(JSON.stringify(info)).toString('base64url') + '.s';
+  const good = { aud: CID, iss: 'https://accounts.google.com', email: 'user1@fs.com', email_verified: 'true', exp: String(Math.floor(Date.now() / 1000) + 600) };
+  assert.strictEqual(ok(call('auth.google', { credential: jwt(good) })).user.username, 'user1');
+  fail(call('auth.google', { credential: jwt({ ...good, aud: 'other.apps.googleusercontent.com' }) }), /تعذر التحقق/);
+  fail(call('auth.google', { credential: jwt({ ...good, email_verified: 'false' }) }), /تعذر التحقق/);
+  fail(call('auth.google', { credential: jwt({ ...good, email: 'stranger@gmail.com' }) }), /غير مسجل/);
+  // نسيت كلمة المرور
+  const before = sentMails.length;
+  ok(call('auth.forgot', { email: 'nobody@fs.com' }));
+  assert.strictEqual(sentMails.length, before, 'no mail for unknown email');
+  ok(call('auth.forgot', { email: 'user2@fs.com' }));
+  assert.strictEqual(sentMails.length, before + 1);
+  const mail = sentMails[sentMails.length - 1];
+  assert.strictEqual(mail.to, 'user2@fs.com');
+  const code = mail.htmlBody.match(/>(\d{6})</)[1];
+  fail(call('auth.reset', { email: 'user2@fs.com', code: '000000', password: 'Fresh12345' }), /غير صحيح/);
+  const r = ok(call('auth.reset', { email: 'user2@fs.com', code, password: 'Fresh12345' }));
+  assert.ok(r.token);
+  fail(call('auth.reset', { email: 'user2@fs.com', code, password: 'Fresh12345' }), /انتهت صلاحيته/);
+  ok(call('auth.login', { email: 'user2@fs.com', password: 'Fresh12345' }));
+  // حساب قديم بدون إيميل يربط إيميله
+  ok(call('auth.setEmail', { email: 'boss@fs.com' }, admin));
+  fail(call('auth.setEmail', { email: 'user1@fs.com' }, admin), /مستخدم لحساب آخر/);
+  ok(call('auth.login', { email: 'boss@fs.com', password: 'Admin12345' }));
+  ok(call('auth.login', { username: 'admin', password: 'Admin12345' })); // اسم المستخدم القديم ما زال يعمل
+  ok(call('admin.userEmail', { username: 'user3', email: 'u3@fs.com' }, admin));
+  ok(call('auth.login', { email: 'u3@fs.com', password: 'Pass12343' }));
+});
+t('favorites, news, dashboard', () => {
+  let f = ok(call('fav.toggle', { source: 'labor14', num: '47' }, user));
+  assert.ok(f.on);
+  ok(call('fav.toggle', { source: 'penreg', num: '9' }, user));
+  const list = ok(call('fav.list', {}, user));
+  assert.deepStrictEqual(list.items.map(x => x.source + '|' + x.num), ['penreg|9', 'labor14|47']);
+  f = ok(call('fav.toggle', { source: 'labor14', num: '47' }, user));
+  assert.ok(!f.on);
+  fail(call('fav.toggle', { source: 'labor14', num: '99999' }, user));
+  const dsh = ok(call('dash', {}, user));
+  assert.ok(dsh.stats.articles > 600); assert.ok(dsh.stats.violations >= 86); assert.strictEqual(dsh.favorites, 1);
+  assert.strictEqual(dsh.stats.teamMonth, null);
+  assert.ok(ok(call('dash', {}, admin)).stats.teamMonth >= 1);
+  assert.ok(Array.isArray(dsh.recent));
+  const news = ok(call('news', {}, user)).items;
+  assert.ok(news.some(n => /لائحة البدلات|بدلات/.test(n.text)), JSON.stringify(news.slice(0, 3)));
+});
+t('users sheet migration adds email/favorites columns', () => {
+  const head = sheets.Users.data[0];
+  assert.ok(head.includes('email') && head.includes('favorites'));
 });
 t('admin overview', () => {
   const o = ok(call('admin.overview', {}, admin));

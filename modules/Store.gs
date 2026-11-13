@@ -7,7 +7,7 @@ var SHEETS = {
   Sources:   ['id', 'title', 'short', 'citation', 'pdf', 'notes'],
   Articles:  ['source', 'num', 'label', 'chapter', 'page', 'also_contains', 'text'],
   Penalties: ['num', 'section', 'text', 'case_label', 'first', 'second', 'third', 'fourth', 'uncertain', 'page', 'manual', 'entered_by', 'entered_at'],
-  Users:     ['username', 'full_name', 'role', 'salt', 'hash', 'active', 'created_at', 'last_login'],
+  Users:     ['username', 'full_name', 'role', 'salt', 'hash', 'active', 'created_at', 'last_login', 'email', 'favorites'],
   Questions: ['id', 'time', 'username', 'mode', 'question', 'provider', 'model', 'answer_json', 'verification_json', 'feedback', 'feedback_note', 'redactions'],
   Documents: ['time', 'username', 'doc_type', 'employee', 'doc_url', 'pdf_url'],
   Settings:  ['key', 'value']
@@ -24,9 +24,17 @@ function sheet_(name) {
     sh.getRange(1, 1, 1, SHEETS[name].length).setValues([SHEETS[name]]).setFontWeight('bold');
     sh.setFrozenRows(1);
     sh.setRightToLeft(false); // الجداول من الشمال لليمين
+  } else if (!sheet_.checked[name]) {
+    // ترقية: إضافة الأعمدة الجديدة لجداول قديمة (تُضاف دائماً في آخر الجدول)
+    var head = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0];
+    var missing = SHEETS[name].filter(function (h) { return head.indexOf(h) < 0; });
+    if (missing.length) sh.getRange(1, head.filter(String).length + 1, 1, missing.length).setValues([missing]).setFontWeight('bold');
   }
+  sheet_.checked[name] = true;
   return sh;
 }
+
+sheet_.checked = {};
 
 function ensureSheets_() {
   Object.keys(SHEETS).forEach(function (n) { sheet_(n); });
@@ -51,8 +59,9 @@ function readRows_(name) {
 }
 
 function appendRow_(name, obj) {
-  var head = SHEETS[name];
-  sheet_(name).appendRow(head.map(function (h) { return obj[h] === undefined ? '' : obj[h]; }));
+  var sh = sheet_(name);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]; // ترتيب أعمدة الجدول الفعلي
+  sh.appendRow(head.map(function (h) { return obj[h] === undefined ? '' : obj[h]; }));
 }
 
 function updateRow_(name, rowNum, obj) {

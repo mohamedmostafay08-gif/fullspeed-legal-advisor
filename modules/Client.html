@@ -39,22 +39,31 @@ var ICONS = {
   bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  star: '<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/>',
+  mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
+  print: '<path d="M6 9V2h12v7"/><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M6 14h12v8H6z"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+  chev: '<path d="M15 18l-6-6 6-6"/>',
   edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'
 };
 function ic(name, cls) { return '<svg class="i ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>'; }
 
-var LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
-  '<path d="M3 8h6M2 12h5M3 16h6"/><path d="M11 6l7 6-7 6"/><path d="M15 6l7 6-7 6" opacity=".55"/></svg>';
+var LOGO_IMG = 'data:image/webp;base64,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';
 // توقيع المطوّر (يظهر في شاشة الدخول وأسفل القائمة وأسفل كل صفحة على الموبايل)
 var CREDIT = '<div class="credit"><span>Powered by <b>Mohamed Mostafa</b></span><a href="tel:+201120339097">01120339097</a></div>';
 
 function logo(sub) {
-  return '<div class="logo"><div class="logo-mark">' + LOGO_SVG + '</div><div class="logo-text"><b>' + esc(window.COMPANY || 'Full Speed') +
-         '</b><span>' + esc(sub || 'المستشار القانوني') + '</span></div></div>';
+  return '<div class="logo"><div class="logo-mark"><img src="' + LOGO_IMG + '" alt=""></div><div class="logo-text"><b>Full<em>Speed</em></b>' +
+         '<span>' + esc(sub || 'المستشار القانوني') + '</span></div></div>';
 }
 
 // ---------------- الاتصال بالخادم ----------------
-var state = { token: null, user: null, view: 'ask', sources: {}, session: [] };
+var state = { token: null, user: null, view: 'home', sources: {}, session: [] };
 try { state.token = localStorage.getItem('fs_token'); } catch (e) { /* تخزين غير متاح */ }
 
 // داخل رابط Apps Script نستخدم google.script.run، وفي التطبيق المستقل (GitHub Pages) نكلم doPost
@@ -98,7 +107,8 @@ function toast(msg, bad) {
   $$('.toast').forEach(function (old) { old.parentNode.removeChild(old); }); // إشعار واحد في كل مرة
   var t = document.createElement('div');
   t.className = 'toast' + (bad ? ' bad' : '');
-  t.textContent = msg;
+  t.innerHTML = ic(bad ? 'alert' : 'check') + '<span></span>';
+  t.lastChild.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function () { t.remove(); }, 3800);
 }
@@ -117,48 +127,152 @@ function modal(title, bodyHtml, footHtml) {
 
 // ---------------- الدخول ----------------
 function logoutLocal() {
-  state.token = null; state.user = null;
+  state.token = null; state.user = null; state.session = [];
   try { localStorage.removeItem('fs_token'); } catch (e) {}
   renderAuth();
 }
 
+/** شبكة المربعات التفاعلية (مثل موقع Full Speed): مربعات تضيء عشوائياً، وتتفاعل مع حركة الماوس. */
+function mountCells(host, opts) {
+  opts = opts || {};
+  var size = opts.size || 78, box = host.getBoundingClientRect();
+  var cols = Math.ceil((box.width || window.innerWidth) / size) + 1, rows = Math.ceil((box.height || window.innerHeight) / size) + 1;
+  var n = Math.min(cols * rows, 420), html = '';
+  for (var i = 0; i < n; i++) html += '<i></i>';
+  var g = document.createElement('div');
+  g.className = 'cells'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = html;
+  host.insertBefore(g, host.firstChild);
+  var cells = g.children, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var timer = setInterval(function () {
+    if (!document.body.contains(g)) { clearInterval(timer); return; }
+    var c = cells[Math.floor(Math.random() * cells.length)];
+    var logoCell = Math.random() < 0.18;
+    c.classList.add('lit');
+    if (logoCell) { c.classList.add('logo-cell'); c.style.backgroundImage = 'url(' + LOGO_IMG + ')'; }
+    setTimeout(function () { c.classList.remove('lit', 'logo-cell'); c.style.backgroundImage = ''; }, reduce ? 2600 : 1900);
+  }, reduce ? 1500 : 420);
+  if (!reduce) g.parentNode.addEventListener('pointermove', function (e) {
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    if (el && el.parentNode === g && !el.classList.contains('hot')) {
+      el.classList.add('hot');
+      setTimeout(function () { el.classList.remove('hot'); }, 380);
+    }
+  });
+  return g;
+}
+
+var TYPER_LINES = ['موظف غاب 3 أيام بدون إذن… ما الجزاء؟', 'كيف أحسب الأجر الإضافي في يوم الراحة؟', 'ما الحد الأقصى للخصم من المرتب؟',
+  'مدة إجازة الوضع للموظفة كام يوم؟', 'نسبة اشتراك التأمينات على صاحب العمل؟'];
+function startTyper(el) {
+  var li = 0, ci = 0, del = false;
+  (function tick() {
+    if (!document.body.contains(el)) return;
+    var line = TYPER_LINES[li];
+    el.textContent = line.slice(0, ci);
+    if (!del && ci < line.length) { ci++; setTimeout(tick, 45); }
+    else if (!del) { del = true; setTimeout(tick, 1800); }
+    else if (ci > 0) { ci -= 2; if (ci < 0) ci = 0; setTimeout(tick, 18); }
+    else { del = false; li = (li + 1) % TYPER_LINES.length; setTimeout(tick, 300); }
+  })();
+}
+
 function authLayout(inner) {
-  return '<div class="auth"><section class="auth-hero">' + logo('المستشار القانوني الداخلي') +
-    '<div><h1>إجابات قانونية دقيقة<br>من نصوص القانون مباشرة</h1>' +
-    '<p>قانون العمل 14 لسنة 2025، قانون التأمينات 148 لسنة 2019، تعديلات ضريبة الدخل، ولائحتا تنظيم العمل والجزاءات.</p>' +
-    '<div class="auth-points"><div>' + ic('check') + 'كل مادة تُذكر تُراجع آلياً مقابل النص الأصلي</div>' +
-    '<div>' + ic('scale') + 'مساعد جزاءات بالمواعيد والقيود القانونية</div>' +
-    '<div>' + ic('file') + 'مستندات تحقيق وجزاء جاهزة للتوقيع</div></div></div>' +
-    '<svg class="speed" width="420" height="160" viewBox="0 0 420 160" fill="none" stroke="#FF6B1A" stroke-width="10" stroke-linecap="round">' +
-    '<path d="M20 40h220M60 80h260M20 120h200"/></svg>' +
-    '<div><div class="small" style="color:#9FB3CC">أداة مساعدة داخلية لا تغني عن الاستشارة القانونية المتخصصة في الحالات محل النزاع.</div>' + CREDIT + '</div>' +
-    '</section><section class="auth-form"><div class="auth-card">' + inner + '</div></section></div>';
+  return '<div class="auth" id="auth"><div class="auth-top">' + logo('المستشار القانوني') + '<span class="spacer"></span>' + themeBtn() + '</div>' +
+    '<div class="auth-wrap"><section class="auth-intro view-in">' +
+    '<div class="kicker">المستشار القانوني الداخلي · ' + esc(window.COMPANY || 'Full Speed') + '</div>' +
+    '<h1>إجابات قانونية دقيقة<br><em>من نص القانون مباشرة.</em></h1>' +
+    '<p>قانون العمل 14 لسنة 2025، التأمينات 148 لسنة 2019، تعديلات ضريبة الدخل، ولائحتا تنظيم العمل والجزاءات — وأي لائحة تضيفها الشركة.</p>' +
+    '<div class="typer">' + ic('ask') + '<span id="typer"></span><span class="caret"></span></div>' +
+    '<div class="auth-points"><div>' + ic('check') + 'كل مادة تُراجع آلياً مقابل النص</div><div>' + ic('scale') + 'مساعد جزاءات بالمواعيد</div><div>' + ic('file') + 'مستندات جاهزة للتوقيع</div></div>' +
+    '</section><section><div class="auth-card view-in">' + inner + '</div></section></div>' +
+    '<div class="auth-foot">أداة مساعدة داخلية لا تغني عن الاستشارة القانونية المتخصصة · Powered by <b>Mohamed Mostafa</b> · <a href="tel:+201120339097">01120339097</a></div></div>';
+}
+function mountAuth(inner) {
+  $('#root').innerHTML = authLayout(inner);
+  mountCells($('#auth'));
+  startTyper($('#typer'));
+  bindTheme();
+}
+function setErr(msg) { $('#err').innerHTML = msg ? '<div class="alert bad">' + ic('alert') + '<div>' + esc(msg) + '</div></div>' : ''; }
+function loggedIn(r) {
+  state.token = r.token; state.user = r.user;
+  try { localStorage.setItem('fs_token', r.token); } catch (e2) {}
+  renderShell();
 }
 
 function renderAuth() {
-  $('#root').innerHTML = authLayout('<div class="empty"><div class="spin" style="margin:auto"></div></div>');
+  mountAuth('<div class="empty"><div class="spin" style="margin:auto"></div></div>');
   api('auth.status').then(function (s) {
     if (s.company) window.COMPANY = s.company;
+    state.googleClientId = s.googleClientId || '';
     if (!s.hasUsers) return renderSetup(s.hasData);
-    $('#root').innerHTML = authLayout(
-      '<h2>تسجيل الدخول</h2><div class="sub">ادخل باسم المستخدم وكلمة المرور التي أعطاها لك مدير النظام.</div>' +
-      '<form id="login"><div class="field"><label class="lbl" for="u">اسم المستخدم</label><input class="input" id="u" autocomplete="username" required dir="ltr"></div>' +
-      '<div class="field"><label class="lbl" for="p">كلمة المرور</label><input class="input" id="p" type="password" autocomplete="current-password" required dir="ltr"></div>' +
-      '<div id="err"></div><button class="btn accent block" id="go">دخول</button></form>');
-    $('#login').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var b = $('#go'); b.disabled = true; b.textContent = 'جارٍ الدخول...';
-      api('auth.login', { username: $('#u').value, password: $('#p').value }).then(function (r) {
-        state.token = r.token; state.user = r.user;
-        try { localStorage.setItem('fs_token', r.token); } catch (e2) {}
-        renderShell();
-      }).catch(function (err) {
-        $('#err').innerHTML = '<div class="alert bad">' + ic('alert') + esc(err.message) + '</div>';
-        b.disabled = false; b.textContent = 'دخول';
-      });
-    });
+    renderLogin();
   }).catch(function (err) {
-    $('#root').innerHTML = authLayout('<div class="alert bad">' + ic('alert') + esc(err.message) + '</div>');
+    mountAuth('<div class="alert bad">' + ic('alert') + '<div>' + esc(err.message) + '</div></div>');
+  });
+}
+
+function renderLogin(prefill) {
+  mountAuth(
+    '<h2>تسجيل الدخول</h2><div class="sub">ادخل بالإيميل وكلمة المرور اللي أعطاها لك مدير النظام.</div>' +
+    '<form id="login"><div class="field"><label class="lbl" for="u">الإيميل</label><input class="input" id="u" type="email" autocomplete="username" required dir="ltr" placeholder="name@company.com" value="' + esc(prefill || '') + '"></div>' +
+    '<div class="field"><label class="lbl" for="p">كلمة المرور <span class="spacer"></span><button type="button" class="linkbtn" id="forgot">نسيت كلمة المرور؟</button></label>' +
+    '<input class="input" id="p" type="password" autocomplete="current-password" required dir="ltr"></div>' +
+    '<div id="err"></div><button class="btn accent block" id="go">دخول <span class="arrow">←</span></button></form>' +
+    (state.googleClientId ? '<div class="or">أو</div><div id="gbtn"></div>' : ''));
+  $('#login').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var b = $('#go'); b.disabled = true; b.innerHTML = '<div class="spin"></div> جارٍ الدخول...';
+    api('auth.login', { email: $('#u').value, password: $('#p').value }).then(loggedIn).catch(function (err) {
+      setErr(err.message); b.disabled = false; b.innerHTML = 'دخول <span class="arrow">←</span>';
+    });
+  });
+  $('#forgot').addEventListener('click', function () { renderForgot($('#u').value); });
+  if (state.googleClientId) mountGoogle();
+}
+
+/** زر "الدخول بحساب Google" (Google Identity Services). */
+function mountGoogle() {
+  var draw = function () {
+    if (!$('#gbtn') || !window.google || !google.accounts) return;
+    google.accounts.id.initialize({ client_id: state.googleClientId, ux_mode: 'popup', callback: function (resp) {
+      setErr('');
+      api('auth.google', { credential: resp.credential }).then(loggedIn).catch(function (err) { setErr(err.message); });
+    } });
+    google.accounts.id.renderButton($('#gbtn'), { theme: document.documentElement.dataset.theme === 'dark' ? 'filled_black' : 'outline',
+      size: 'large', shape: 'pill', text: 'signin_with', locale: 'ar', width: Math.min(360, $('#gbtn').offsetWidth || 320) });
+  };
+  if (window.google && google.accounts) return draw();
+  var s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = draw;
+  s.onerror = function () { var g = $('#gbtn'); if (g) g.innerHTML = '<div class="small muted">تعذر تحميل زر Google</div>'; };
+  document.head.appendChild(s);
+}
+
+function renderForgot(email) {
+  mountAuth(
+    '<h2>استعادة كلمة المرور</h2><div class="sub">هنبعت كود من 6 أرقام على إيميلك، صالح لمدة 15 دقيقة.</div>' +
+    '<form id="fg"><div class="field"><label class="lbl">الإيميل</label><input class="input" id="fe" type="email" required dir="ltr" value="' + esc(email || '') + '"></div>' +
+    '<div id="step2" class="hidden"><div class="field"><label class="lbl">الكود اللي وصلك</label><input class="input num" id="fc" inputmode="numeric" maxlength="6" dir="ltr" style="letter-spacing:.4em;text-align:center;font-size:20px"></div>' +
+    '<div class="field"><label class="lbl">كلمة المرور الجديدة</label><input class="input" id="fp" type="password" dir="ltr" autocomplete="new-password"><div class="hint">8 أحرف على الأقل، أرقام وحروف</div></div></div>' +
+    '<div id="err"></div><button class="btn accent block" id="go">ابعت الكود</button></form>' +
+    '<div class="row" style="margin-top:14px;justify-content:center"><button class="linkbtn" id="back">← رجوع لتسجيل الدخول</button></div>');
+  var sent = false;
+  $('#back').addEventListener('click', function () { renderLogin($('#fe').value); });
+  $('#fg').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var b = $('#go'); b.disabled = true; setErr('');
+    if (!sent) {
+      api('auth.forgot', { email: $('#fe').value }).then(function () {
+        sent = true; $('#step2').classList.remove('hidden'); $('#fe').readOnly = true; $('#fc').focus();
+        b.textContent = 'تغيير كلمة المرور والدخول';
+        toast('لو الإيميل مسجل عندنا، الكود وصله دلوقتي. راجع الـ Spam كمان.');
+      }).catch(function (err) { setErr(err.message); }).then(function () { b.disabled = false; });
+    } else {
+      api('auth.reset', { email: $('#fe').value, code: $('#fc').value, password: $('#fp').value }).then(function (r) {
+        toast('تم تغيير كلمة المرور'); loggedIn(r);
+      }).catch(function (err) { setErr(err.message); b.disabled = false; });
+    }
   });
 }
 
@@ -175,13 +289,13 @@ function uploadDataFile(file, action, extra, onProgress) {
 }
 
 function renderSetup(hasData) {
-  $('#root').innerHTML = authLayout(
-    '<h2>الإعداد الأول</h2><div class="sub">إنشاء حساب مدير النظام وتثبيت القوانين. تحتاج "كود الإعداد" الذي يظهر عند تشغيل الدالة createSetupCode من محرر Apps Script.</div>' +
+  mountAuth(
+    '<h2>الإعداد الأول</h2><div class="sub">إنشاء حساب مدير النظام وتثبيت القوانين. تحتاج "كود الإعداد" اللي بيظهر لما تشغّل الدالة createSetupCode من محرر Apps Script.</div>' +
     '<form id="setup"><div class="field"><label class="lbl">كود الإعداد</label><input class="input" id="sc" required dir="ltr"></div>' +
     '<div class="field"><label class="lbl">ملف البيانات (القوانين واللوائح)</label><input class="input" id="df" type="file" accept=".json"' + (hasData ? '' : ' required') + '>' +
     '<div class="hint">' + (hasData ? 'البيانات مثبتة بالفعل؛ اختر الملف فقط إذا أردت استبدالها.' : 'اختر الملف FullSpeed_Legal_Data.json من الحزمة.') + '</div></div>' +
     '<div class="field"><label class="lbl">الاسم الكامل</label><input class="input" id="fn" required></div>' +
-    '<div class="field"><label class="lbl">اسم المستخدم (إنجليزي)</label><input class="input" id="su" required dir="ltr"></div>' +
+    '<div class="field"><label class="lbl">الإيميل</label><input class="input" id="su" type="email" required dir="ltr"></div>' +
     '<div class="field"><label class="lbl">كلمة المرور (8 أحرف على الأقل، أرقام وحروف)</label><input class="input" id="sp" type="password" required dir="ltr"></div>' +
     '<div id="err"></div><button class="btn accent block" id="go">تثبيت وإنشاء الحساب</button></form>');
   $('#setup').addEventListener('submit', function (e) {
@@ -193,63 +307,107 @@ function renderSetup(hasData) {
       : Promise.resolve(0);
     step.then(function (parts) {
       b.textContent = 'جارٍ تثبيت القوانين وإنشاء الحساب...';
-      return api('auth.setup', { setupCode: code, fullName: $('#fn').value, username: $('#su').value, password: $('#sp').value, dataParts: parts || undefined });
+      return api('auth.setup', { setupCode: code, fullName: $('#fn').value, email: $('#su').value, password: $('#sp').value, dataParts: parts || undefined });
     }).then(function (r) {
       toast(r.imported ? 'تم تثبيت ' + r.imported.articles + ' مادة و' + r.imported.penalties + ' صف جزاءات. سجّل الدخول الآن' : 'تم إنشاء حساب المدير، سجّل الدخول الآن');
-      renderAuth();
+      renderLogin($('#su') ? $('#su').value : '');
     }).catch(function (err) {
-      $('#err').innerHTML = '<div class="alert bad">' + ic('alert') + esc(err.message) + '</div>';
+      setErr(err.message);
       b.disabled = false; b.textContent = 'تثبيت وإنشاء الحساب';
+    });
+  });
+}
+
+// ---------------- الوضع الفاتح والغامق ----------------
+function themeBtn() {
+  return '<button class="tb-icon" data-theme-toggle title="الوضع الفاتح / الغامق" aria-label="تبديل الوضع">' +
+    ic(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon') + '</button>';
+}
+function bindTheme() {
+  $$('[data-theme-toggle]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var dark = document.documentElement.dataset.theme !== 'dark';
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      try { localStorage.setItem('fs_theme', dark ? 'dark' : 'light'); } catch (e) {}
+      var meta = document.querySelector('meta[name=theme-color]');
+      if (meta) meta.content = dark ? '#070A08' : '#F4F6F3';
+      $$('[data-theme-toggle]').forEach(function (x) { x.innerHTML = ic(dark ? 'sun' : 'moon'); x.classList.remove('spin-once'); void x.offsetWidth; x.classList.add('spin-once'); });
     });
   });
 }
 
 // ---------------- هيكل التطبيق ----------------
 var VIEWS = [
-  ['ask', 'اسأل المستشار', 'ask'], ['penalties', 'مساعد الجزاءات', 'scale'], ['calc', 'الحاسبات', 'calc'],
+  ['home', 'الرئيسية', 'home'], ['ask', 'اسأل المستشار', 'ask'], ['penalties', 'مساعد الجزاءات', 'scale'], ['calc', 'الحاسبات', 'calc'],
   ['docs', 'المستندات', 'file'], ['laws', 'القوانين واللوائح', 'book'], ['history', 'سجل الأسئلة', 'clock'], ['admin', 'الإدارة', 'admin']
 ];
 function viewTitle(v) { for (var i = 0; i < VIEWS.length; i++) if (VIEWS[i][0] === v) return VIEWS[i][1]; return ''; }
 
 function renderShell() {
   var u = state.user;
+  var mini = false;
+  try { mini = localStorage.getItem('fs_mini') === '1'; } catch (e) {}
   var nav = VIEWS.filter(function (v) { return v[0] !== 'admin' || u.role === 'admin'; }).map(function (v) {
-    return '<a data-view="' + v[0] + '">' + ic(v[2]) + '<span>' + v[1] + '</span></a>';
+    return '<a data-view="' + v[0] + '" title="' + v[1] + '">' + ic(v[2]) + '<span>' + v[1] + '</span></a>';
   }).join('');
-  var bottom = [['ask', 'اسأل', 'ask'], ['penalties', 'الجزاءات', 'scale'], ['calc', 'الحاسبات', 'calc'], ['docs', 'المستندات', 'file'], ['more', 'المزيد', 'more']]
+  var bottom = [['home', 'الرئيسية', 'home'], ['ask', 'اسأل', 'ask'], ['penalties', 'الجزاءات', 'scale'], ['laws', 'القوانين', 'book'], ['more', 'المزيد', 'more']]
     .map(function (v) { return '<a data-view="' + v[0] + '">' + ic(v[2]) + '<span>' + v[1] + '</span></a>'; }).join('');
   $('#root').innerHTML =
-    '<div class="shell"><aside class="sidebar">' + logo() + '<nav class="nav">' + nav + '</nav>' +
+    '<div class="shell' + (mini ? ' mini' : '') + '"><aside class="sidebar"><button class="collapse-btn" id="collapse" aria-label="تصغير القائمة">' + ic('chev') + '</button>' +
+    logo() + '<nav class="nav"><div class="nav-ind" id="navind"></div>' + nav + '</nav>' +
     '<div class="side-foot"><div class="me"><div class="avatar">' + esc(u.full_name.trim().charAt(0)) + '</div><div><b>' + esc(u.full_name) +
     '</b><span>' + (u.role === 'admin' ? 'مدير النظام' : 'مستخدم') + '</span></div></div>' +
-    '<a data-act="password">' + ic('key') + 'تغيير كلمة المرور</a><a data-act="logout">' + ic('logout') + 'تسجيل الخروج</a>' + CREDIT + '</div></aside>' +
-    '<div class="main"><header class="topbar"><div class="mob-logo">' + logo() + '</div><div class="title-wrap"><h1 id="vt"></h1>' +
-    '<div class="crumb">' + esc(window.COMPANY) + ' · المستشار القانوني</div></div></header>' +
-    '<main class="content"><div class="page-title" id="vt2"></div><div id="view"></div><div class="page-credit">' + CREDIT + '</div></main></div>' +
+    '<a data-act="favs" title="المفضلة">' + ic('star') + '<span>المفضلة</span></a>' +
+    '<a data-act="password" title="تغيير كلمة المرور">' + ic('key') + '<span>تغيير كلمة المرور</span></a>' +
+    '<a data-act="logout" title="تسجيل الخروج">' + ic('logout') + '<span>تسجيل الخروج</span></a>' + CREDIT + '</div></aside>' +
+    '<div class="main"><header class="topbar" id="topbar"><div class="mob-logo">' + logo() + '</div><div class="title-wrap"><h1 id="vt"></h1>' +
+    '<div class="crumb">' + esc(window.COMPANY) + ' · المستشار القانوني</div></div><span class="spacer"></span>' +
+    '<button class="searchbtn" id="openpal">' + ic('search') + '<span>ابحث عن مادة أو صفحة…</span><kbd>Ctrl K</kbd></button>' +
+    '<button class="tb-icon" id="newsbtn" title="إيه الجديد" aria-label="إيه الجديد">' + ic('bell') + '</button>' + themeBtn() + '</header>' +
+    '<main class="content"><div id="view"></div><div class="page-credit">' + CREDIT + '</div></main></div>' +
     '<nav class="bottomnav">' + bottom + '</nav></div>';
   $$('[data-view]').forEach(function (a) {
     a.addEventListener('click', function () { a.dataset.view === 'more' ? moreMenu() : go(a.dataset.view); });
   });
   $$('[data-act]').forEach(function (a) {
-    a.addEventListener('click', function () { a.dataset.act === 'logout' ? doLogout() : changePassword(); });
+    a.addEventListener('click', function () { var x = a.dataset.act; x === 'logout' ? doLogout() : x === 'favs' ? showFavorites() : changePassword(); });
   });
-  api('kb.sources').then(function (list) {
-    list.forEach(function (s) { state.sources[s.id] = s; });
-  }).catch(function () {});
-  go(state.view || 'ask');
+  $('#collapse').addEventListener('click', function () {
+    var s = $('.shell'); s.classList.toggle('mini');
+    try { localStorage.setItem('fs_mini', s.classList.contains('mini') ? '1' : '0'); } catch (e) {}
+    setTimeout(moveNavInd, 360);
+  });
+  $('#openpal').addEventListener('click', openPalette);
+  $('#newsbtn').addEventListener('click', showNews);
+  bindTheme();
+  window.onscroll = function () { var t = $('#topbar'); if (t) t.classList.toggle('scrolled', window.scrollY > 8); };
+  api('kb.sources').then(function (list) { list.forEach(function (s) { state.sources[s.id] = s; }); }).catch(function () {});
+  checkNews();
+  go(state.view || 'home');
+  if (!u.email) setTimeout(askEmail, 600);
+}
+
+function moveNavInd() {
+  var a = $('.nav a.active'), ind = $('#navind');
+  if (!ind) return;
+  if (!a) { ind.style.opacity = 0; return; }
+  ind.style.opacity = 1;
+  ind.style.height = a.offsetHeight + 'px';
+  ind.style.transform = 'translateY(' + a.offsetTop + 'px)';
 }
 
 function moreMenu() {
-  var items = [['laws', 'القوانين واللوائح', 'book'], ['history', 'سجل الأسئلة', 'clock']];
+  var items = [['docs', 'المستندات', 'file'], ['calc', 'الحاسبات', 'calc'], ['history', 'سجل الأسئلة', 'clock']];
   if (state.user.role === 'admin') items.push(['admin', 'الإدارة', 'admin']);
   var html = '<div class="sheet-menu">' + items.map(function (i) { return '<a data-go="' + i[0] + '">' + ic(i[2]) + i[1] + '</a>'; }).join('') +
+    '<div class="sep"></div><a data-go="favs">' + ic('star') + 'المفضلة</a><a data-go="news">' + ic('bell') + 'إيه الجديد</a>' +
     '<a data-go="password">' + ic('key') + 'تغيير كلمة المرور</a><a data-go="logout">' + ic('logout') + 'تسجيل الخروج</a></div>';
   var m = modal(state.user.full_name, html);
   $$('[data-go]', m).forEach(function (a) {
     a.addEventListener('click', function () {
       m.remove();
       var g = a.dataset.go;
-      if (g === 'logout') doLogout(); else if (g === 'password') changePassword(); else go(g);
+      if (g === 'logout') doLogout(); else if (g === 'password') changePassword(); else if (g === 'favs') showFavorites(); else if (g === 'news') showNews(); else go(g);
     });
   });
 }
@@ -269,19 +427,220 @@ function changePassword() {
   });
 }
 
-function go(view) {
+/** الحسابات القديمة (اسم مستخدم بدون إيميل) تربط إيميلها مرة واحدة. */
+function askEmail() {
+  var m = modal('اربط إيميلك بالحساب',
+    '<div class="alert info">' + ic('info') + '<div>الدخول بقى بالإيميل. اكتب إيميلك مرة واحدة عشان تقدر تدخل بيه، وتستخدم "نسيت كلمة المرور" والدخول بحساب Google.</div></div>' +
+    '<div class="field"><label class="lbl">الإيميل</label><input class="input" id="me" type="email" dir="ltr"></div>',
+    '<button class="btn ghost" data-close>بعدين</button><button class="btn accent" id="mesave">حفظ</button>');
+  $('#mesave', m).addEventListener('click', function () {
+    api('auth.setEmail', { email: $('#me', m).value }).then(function (r) { state.user.email = r.email; m.remove(); toast('تم ربط الإيميل، ادخل بيه المرة الجاية'); })
+      .catch(function (e) { toast(e.message, true); });
+  });
+}
+
+function go(view, opts) {
   state.view = view;
   $$('[data-view]').forEach(function (a) {
-    var on = a.dataset.view === view || (a.dataset.view === 'more' && ['laws', 'history', 'admin'].indexOf(view) >= 0);
+    var on = a.dataset.view === view || (a.dataset.view === 'more' && ['docs', 'calc', 'history', 'admin'].indexOf(view) >= 0);
     a.classList.toggle('active', on);
   });
+  moveNavInd();
   $('#vt').textContent = viewTitle(view);
-  $('#vt2').textContent = viewTitle(view);
+  document.title = viewTitle(view) + ' | المستشار القانوني';
   var v = $('#view');
+  v.className = '';
   v.innerHTML = '';
+  void v.offsetWidth;
+  v.className = 'view-in';
   window.scrollTo(0, 0);
-  ({ ask: viewAsk, penalties: viewPenalties, calc: viewCalc, docs: viewDocs, laws: viewLaws, history: viewHistory, admin: viewAdmin }[view])(v);
+  ({ home: viewHome, ask: viewAsk, penalties: viewPenalties, calc: viewCalc, docs: viewDocs, laws: viewLaws, history: viewHistory, admin: viewAdmin }[view])(v, opts || {});
 }
+
+// ---------------- الرئيسية ----------------
+function greeting() {
+  var h = new Date().getHours();
+  return h < 12 ? 'صباح الخير' : 'مساء الخير';
+}
+function countUp(el) {
+  var to = +el.dataset.to || 0, t0 = performance.now(), dur = 1100;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = to.toLocaleString('en-US'); return; }
+  (function f(t) {
+    var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 4);
+    el.textContent = Math.round(to * e).toLocaleString('en-US');
+    if (p < 1) requestAnimationFrame(f);
+  })(t0);
+}
+function viewHome(v) {
+  var first = state.user.full_name.trim().split(/\s+/)[0];
+  v.innerHTML =
+    '<section class="hero" id="hero"><div class="kicker">' + greeting() + '، ' + esc(first) + '</div>' +
+    '<h2>عندك سؤال قانوني؟ <em>اسأل وخد الإجابة بالمادة.</em></h2>' +
+    '<p>اكتب السؤال أو الحالة بالعامية، والمستشار يرد من نصوص القانون واللوائح مع رقم المادة والشرح والأمثلة.</p>' +
+    '<form class="hero-ask" id="hask"><input id="hq" placeholder="مثال: موظف اتأخر ساعتين للمرة التانية، ما الجزاء؟" autocomplete="off">' +
+    '<button class="btn accent">' + ic('send') + 'اسأل</button></form></section>' +
+    '<div class="grid g4 stagger" id="stats">' +
+    [['book', 'مادة قانونية متاحة', 'articles'], ['scale', 'مخالفة في لائحة الجزاءات', 'violations'], ['ask', 'سؤال ليك الشهر ده', 'myMonth'], ['star', 'مادة في المفضلة', 'favorites']]
+      .map(function (s, i) { return '<div class="card stat" style="--i:' + i + '"><div class="ic">' + ic(s[0]) + '</div><div class="v num" data-k="' + s[2] + '">0</div><div class="l">' + s[1] + '</div></div>'; }).join('') +
+    '</div><div class="grid g4 stagger">' +
+    [['ask', 'اسأل المستشار', 'سؤال أو حالة عملية بالتفصيل', 'ask'], ['scale', 'احسب جزاء', 'معالج بخطوات: المخالفة، التكرار، المواعيد', 'penalties'],
+     ['file', 'اعمل مستند', 'إخطار، محضر تحقيق، قرار جزاء، إنذار', 'docs'], ['calc', 'الحاسبات', 'الإضافي، الخصم، التأمينات، الضريبة', 'calc']]
+      .map(function (q, i) { return '<div class="card quick lift" style="--i:' + (i + 4) + '" data-goto="' + q[3] + '"><div class="ic">' + ic(q[0]) + '</div><h3>' + q[1] + '</h3><p>' + q[2] + '</p></div>'; }).join('') +
+    '</div><div class="dash-grid"><div class="card"><div class="card-head"><h2>' + ic('clock') + ' آخر أسئلتك</h2><span class="spacer"></span><button class="btn ghost sm" data-goto="history">الكل</button></div><div id="recent"><div class="skeleton"><div></div><div></div></div></div></div>' +
+    '<div class="card"><div class="card-head"><h2>' + ic('bell') + ' إيه الجديد</h2></div><div id="hnews"><div class="skeleton"><div></div><div></div></div></div></div></div>';
+  mountCells($('#hero'), { size: 64 });
+  $('#hask').addEventListener('submit', function (e) { e.preventDefault(); go('ask', { q: $('#hq').value.trim(), send: !!$('#hq').value.trim() }); });
+  $$('[data-goto]', v).forEach(function (c) { c.addEventListener('click', function () { go(c.dataset.goto); }); });
+  api('dash').then(function (d) {
+    var vals = { articles: d.stats.articles, violations: d.stats.violations, myMonth: d.stats.myMonth, favorites: d.favorites };
+    $$('#stats [data-k]').forEach(function (el) { el.dataset.to = vals[el.dataset.k]; countUp(el); });
+    $('#recent').innerHTML = d.recent.length ? d.recent.map(function (r) {
+      return '<div class="list-row" data-h="' + esc(r.id) + '">' + ic('ask') + '<span class="t1">' + esc(r.question) + '</span><span class="small muted num">' + esc(r.time.slice(5, 10)) + '</span></div>';
+    }).join('') : '<div class="empty">لسه مسألتش أي سؤال. جرّب من فوق 👆</div>';
+    $$('#recent [data-h]').forEach(function (row) { row.addEventListener('click', function () { openHistoryItem(row.dataset.h); }); });
+    $('#hnews').innerHTML = renderNews(d.news, 6);
+    bindNewsLinks($('#hnews'));
+    if (!d.ai && isAdmin()) $('#hero').insertAdjacentHTML('beforeend', '<div class="alert warn" style="margin-top:16px;max-width:640px">' + ic('info') + '<div>مفيش مفتاح Gemini، فالبرنامج شغال في وضع البحث بس. ضيف المفتاح من الإدارة.</div></div>');
+  }).catch(function (e) { toast(e.message, true); });
+}
+function openHistoryItem(id) {
+  var m = modal('جارٍ التحميل...', '<div class="skeleton"><div></div><div></div><div></div></div>');
+  m.querySelector('.modal').classList.add('wide');
+  api('history.get', { id: id }).then(function (r) {
+    state.lastHistory = r;
+    $('.modal-h h3', m).textContent = r.question.slice(0, 90);
+    $('.modal-b', m).innerHTML = renderAnswer(r);
+  }).catch(function (e) { $('.modal-b', m).innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+}
+
+// ---------------- إيه الجديد ----------------
+function timeAgo(iso) {
+  var s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 3600) return 'من ' + Math.max(1, Math.round(s / 60)) + ' دقيقة';
+  if (s < 86400) return 'من ' + Math.round(s / 3600) + ' ساعة';
+  return 'من ' + Math.round(s / 86400) + ' يوم';
+}
+function renderNews(items, max) {
+  items = (items || []).slice(0, max || 20);
+  if (!items.length) return '<div class="empty">مفيش تعديلات على القوانين لسه.</div>';
+  return items.map(function (n) {
+    var link = n.ref && n.ref.source && n.ref.num ? ' data-src="' + esc(n.ref.source) + '" data-num="' + esc(n.ref.num) + '"' : (n.ref && n.ref.source ? ' data-open-src="' + esc(n.ref.source) + '"' : '');
+    return '<div class="list-row"' + link + '>' + ic('edit') + '<span class="t1">' + esc(n.text) + '</span><span class="small muted">' + timeAgo(n.t) + '</span></div>';
+  }).join('');
+}
+function bindNewsLinks(box) {
+  $$('[data-src]', box).forEach(function (r) { r.addEventListener('click', function () { showArticle(r.dataset.src, r.dataset.num); }); });
+  $$('[data-open-src]', box).forEach(function (r) { r.addEventListener('click', function () { $$('.modal-bg').forEach(function (x) { x.remove(); }); go('laws', { source: r.dataset.openSrc }); }); });
+}
+function checkNews() {
+  api('news').then(function (d) {
+    state.news = d.items;
+    var seen = ''; try { seen = localStorage.getItem('fs_news_seen') || ''; } catch (e) {}
+    if (d.items.length && d.items[0].t > seen && $('#newsbtn')) $('#newsbtn').insertAdjacentHTML('beforeend', '<span class="dot"></span>');
+  }).catch(function () {});
+}
+function showNews() {
+  var m = modal('إيه الجديد في القوانين', renderNews(state.news || [], 20));
+  bindNewsLinks(m);
+  try { if (state.news && state.news[0]) localStorage.setItem('fs_news_seen', state.news[0].t); } catch (e) {}
+  var d = $('#newsbtn .dot'); if (d) d.remove();
+}
+
+// ---------------- المفضلة ----------------
+function showFavorites() {
+  var m = modal('المفضلة', '<div class="skeleton"><div></div><div></div></div>');
+  api('fav.list').then(function (d) {
+    state.favs = d.keys;
+    $('.modal-b', m).innerHTML = d.items.length ? d.items.map(function (a) {
+      return '<div class="list-row" data-src="' + esc(a.source) + '" data-num="' + esc(a.num) + '">' + ic('star') + '<div class="t1"><b>' + esc(a.label) + '</b> · <span class="muted">' + esc(a.short) + '</span>' +
+        '<div class="small muted" style="white-space:normal">' + esc(a.snippet) + '…</div></div></div>';
+    }).join('') : '<div class="empty">مفيش مواد في المفضلة. افتح أي مادة ودوس ⭐ عشان تحفظها.</div>';
+    $$('[data-src]', m).forEach(function (r) { r.addEventListener('click', function () { m.remove(); showArticle(r.dataset.src, r.dataset.num); }); });
+  }).catch(function (e) { $('.modal-b', m).innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+}
+function isFav(source, num) { return (state.favs || []).indexOf(source + '|' + num) >= 0; }
+function loadFavs() { return state.favs ? Promise.resolve(state.favs) : api('fav.list').then(function (d) { state.favs = d.keys; return d.keys; }).catch(function () { return []; }); }
+
+// ---------------- البحث السريع (Ctrl + K) ----------------
+function openPalette() {
+  if ($('.palette')) return;
+  var p = document.createElement('div');
+  p.className = 'palette';
+  p.innerHTML = '<div class="palette-box" role="dialog" aria-label="بحث سريع"><div class="palette-in">' + ic('search') +
+    '<input id="pq" placeholder="اكتب: مادة 69، الإجازة، التأمينات، أو اسم صفحة…" autocomplete="off"><button class="x" data-close>' + ic('x') + '</button></div><div class="palette-list" id="pl"></div></div>';
+  document.body.appendChild(p);
+  var input = $('#pq'), list = $('#pl'), items = [], sel = 0, timer = null, seq = 0;
+  var pages = VIEWS.filter(function (x) { return x[0] !== 'admin' || isAdmin(); }).map(function (x) { return { kind: 'page', icon: x[2], title: x[1], go: x[0] }; })
+    .concat([{ kind: 'page', icon: 'star', title: 'المفضلة', act: showFavorites }, { kind: 'page', icon: 'bell', title: 'إيه الجديد', act: showNews },
+             { kind: 'page', icon: 'moon', title: 'تبديل الوضع الفاتح / الغامق', act: function () { var b = $('[data-theme-toggle]'); if (b) b.click(); } }]);
+  var draw = function (arts, loading) {
+    var q = input.value.trim();
+    var pg = pages.filter(function (x) { return !q || x.title.indexOf(q) >= 0; });
+    items = pg.concat(arts || []);
+    if (q && q.length >= 2) items.unshift({ kind: 'ask', icon: 'ask', title: 'اسأل المستشار: "' + q + '"', q: q });
+    sel = Math.min(sel, Math.max(0, items.length - 1));
+    var html = '', lastKind = '';
+    items.forEach(function (it, i) {
+      var grp = it.kind === 'art' ? 'مواد' : it.kind === 'page' ? 'صفحات' : '';
+      if (grp && grp !== lastKind) html += '<div class="grp">' + grp + '</div>';
+      lastKind = grp || lastKind;
+      html += '<a data-i="' + i + '"' + (i === sel ? ' class="sel"' : '') + '>' + ic(it.icon) + '<div><div>' + esc(it.title) + '</div>' + (it.sub ? '<div class="sub">' + esc(it.sub) + '</div>' : '') + '</div></a>';
+    });
+    if (loading) html += '<div class="loading-line" style="padding:10px 12px"><div class="spin"></div>بحث في المواد…</div>';
+    list.innerHTML = html || '<div class="empty">مفيش نتائج</div>';
+    $$('a', list).forEach(function (a) { a.addEventListener('click', function () { run(items[+a.dataset.i]); }); });
+  };
+  var run = function (it) {
+    if (!it) return;
+    close();
+    if (it.kind === 'ask') go('ask', { q: it.q, send: true });
+    else if (it.kind === 'art') showArticle(it.source, it.num);
+    else if (it.act) it.act();
+    else go(it.go);
+  };
+  var close = function () { p.remove(); document.removeEventListener('keydown', keys, true); };
+  var keys = function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); draw(items.filter(function (x) { return x.kind === 'art'; })); scrollSel(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); draw(items.filter(function (x) { return x.kind === 'art'; })); scrollSel(); }
+    else if (e.key === 'Enter') { e.preventDefault(); run(items[sel]); }
+  };
+  var scrollSel = function () { var a = $('a.sel', list); if (a) a.scrollIntoView({ block: 'nearest' }); };
+  document.addEventListener('keydown', keys, true);
+  p.addEventListener('click', function (e) { if (e.target === p || e.target.closest('[data-close]')) close(); });
+  input.addEventListener('input', function () {
+    sel = 0;
+    var q = input.value.trim(), my = ++seq;
+    clearTimeout(timer);
+    if (q.length < 2) return draw([]);
+    draw([], true);
+    timer = setTimeout(function () {
+      api('kb.search', { q: q }).then(function (d) {
+        if (my !== seq) return;
+        draw(d.results.slice(0, 8).map(function (r) {
+          return { kind: 'art', icon: 'book', title: (r.source === 'penreg' ? 'مخالفة ' : 'مادة ') + r.num + ' · ' + (d.sources[r.source] || r.source), sub: r.snippet, source: r.source, num: r.num };
+        }));
+      }).catch(function () { draw([]); });
+    }, 260);
+  });
+  draw([]);
+  setTimeout(function () { input.focus(); }, 30);
+}
+document.addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K') && state.user) { e.preventDefault(); openPalette(); }
+});
+
+// تأثير الضغطة على الأزرار
+document.addEventListener('pointerdown', function (e) {
+  var b = e.target.closest && e.target.closest('.btn');
+  if (!b || b.disabled) return;
+  var r = b.getBoundingClientRect(), s = Math.max(r.width, r.height);
+  var x = document.createElement('span');
+  x.className = 'ripple';
+  x.style.cssText = 'width:' + s + 'px;height:' + s + 'px;left:' + (e.clientX - r.left - s / 2) + 'px;top:' + (e.clientY - r.top - s / 2) + 'px';
+  b.appendChild(x);
+  setTimeout(function () { x.remove(); }, 650);
+});
 
 // ---------------- عرض المواد ----------------
 function srcShort(id) { return (state.sources[id] && state.sources[id].short) || id; }
@@ -295,17 +654,39 @@ document.addEventListener('click', function (e) {
 });
 function showArticle(source, num) {
   var m = modal('جارٍ التحميل...', '<div class="skeleton"><div></div><div></div><div style="width:60%"></div></div>');
-  api('kb.article', { source: source, num: num }).then(function (a) {
+  Promise.all([api('kb.article', { source: source, num: num }), loadFavs()]).then(function (res) {
+    var a = res[0];
     $('.modal-h h3', m).textContent = a.label + ' — ' + a.source_short;
     var note = (a.num !== String(num).trim() && a.also && a.also.length)
       ? '<div class="alert warn">' + ic('info') + 'نص المادة ' + esc(num) + ' مدمج داخل هذا الجزء لأن عنوانها لم يُقرأ آلياً من النسخة الممسوحة.</div>' : '';
-    $('.modal-b', m).innerHTML = note + (a.chapter ? '<div class="muted small" style="margin-bottom:8px">' + esc(a.chapter) + '</div>' : '') + esc(a.text);
-    if (a.pdfUrl) {
-      var f = document.createElement('div'); f.className = 'modal-f';
-      f.innerHTML = '<a class="btn soft sm" target="_blank" rel="noopener" href="' + esc(a.pdfUrl) + '">' + ic('ext') + 'الملف الأصلي' + (a.page ? ' (صفحة ' + a.page + ')' : '') + '</a>';
-      $('.modal', m).appendChild(f);
-    }
+    var b = $('.modal-b', m);
+    b.classList.add('pre');
+    b.innerHTML = note + (a.chapter ? '<div class="muted small" style="margin-bottom:8px">' + esc(a.chapter) + '</div>' : '') + esc(a.text);
+    var f = document.createElement('div'); f.className = 'modal-f';
+    f.innerHTML = '<button class="btn ghost sm star' + (isFav(a.source, a.num) ? ' on' : '') + '" id="favb">' + ic('star') + '<span>' + (isFav(a.source, a.num) ? 'في المفضلة' : 'أضف للمفضلة') + '</span></button>' +
+      '<button class="btn ghost sm" id="cpy">' + ic('copy') + 'نسخ النص</button>' +
+      (a.pdfUrl ? '<a class="btn soft sm" target="_blank" rel="noopener" href="' + esc(a.pdfUrl) + '">' + ic('ext') + 'الملف الأصلي' + (a.page ? ' (صفحة ' + a.page + ')' : '') + '</a>' : '');
+    $('.modal', m).appendChild(f);
+    $('#favb', m).addEventListener('click', function () {
+      var btn = this;
+      api('fav.toggle', { source: a.source, num: a.num }).then(function (r) {
+        state.favs = r.keys;
+        btn.classList.toggle('on', r.on); $('span', btn).textContent = r.on ? 'في المفضلة' : 'أضف للمفضلة';
+        toast(r.on ? 'اتحفظت في المفضلة ⭐' : 'اتشالت من المفضلة');
+      }).catch(function (e) { toast(e.message, true); });
+    });
+    $('#cpy', m).addEventListener('click', function () { copyText(a.label + ' — ' + a.source_title + '\n\n' + a.text); });
   }).catch(function (e) { $('.modal-h h3', m).textContent = 'غير موجود'; $('.modal-b', m).textContent = e.message; });
+}
+
+function copyText(t) {
+  var done = function () { toast('اتنسخ ✓'); };
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t).then(done, function () { fallbackCopy(t); done(); });
+  fallbackCopy(t); done();
+}
+function fallbackCopy(t) {
+  var x = document.createElement('textarea'); x.value = t; x.style.position = 'fixed'; x.style.opacity = '0';
+  document.body.appendChild(x); x.select(); try { document.execCommand('copy'); } catch (e) {} x.remove();
 }
 
 function md(text) {
@@ -397,51 +778,124 @@ function privacyGate(text) {
   });
 }
 
-// ---------------- اسأل ----------------
-var SUGGESTIONS = ['موظف غاب 3 أيام بدون إذن، ما الجزاء وهل يجوز فصله؟', 'ما الحد الأقصى للخصم من الأجر في الشهر؟',
-  'كيف يُحسب الأجر الإضافي في يوم الراحة؟', 'موظف كسر لابتوب الشركة، هل نخصم ثمنه من مرتبه؟', 'ما مدة إجازة الوضع للموظفة؟'];
+// ---------------- اسأل: محادثة + لوحة المواد ----------------
+var SUGGESTIONS = [['موظف غاب 3 أيام بدون إذن، ما الجزاء وهل يجوز فصله؟', 'case'], ['ما الحد الأقصى للخصم من الأجر في الشهر؟', 'question'],
+  ['كيف يُحسب الأجر الإضافي في يوم الراحة؟', 'question'], ['موظف كسر لابتوب الشركة، هل نخصم ثمنه من مرتبه؟', 'case'],
+  ['ما مدة إجازة الوضع للموظفة؟', 'question'], ['نسبة اشتراك التأمينات على صاحب العمل والعامل؟', 'question']];
+var THINK_STEPS = ['بيدوّر في المواد المرتبطة…', 'بيقرا نصوص القانون واللوائح…', 'بيربط بين القوانين…', 'بيصيغ الإجابة والأمثلة…', 'بيراجع الاقتباسات مقابل النص…'];
 
-function viewAsk(v) {
-  v.innerHTML =
-    '<div class="card ask-hero"><div class="row"><h2>اسأل المستشار القانوني</h2><span class="spacer"></span>' +
-    '<div class="seg" id="mode"><button class="on" data-m="question">سؤال</button><button data-m="case">حالة عملية</button></div></div>' +
-    '<div class="muted small" style="margin-top:6px">الإجابة من النصوص القانونية المتاحة فقط، مع رقم المادة والتحقق الآلي من كل اقتباس.</div>' +
-    '<textarea class="input" id="q" rows="4" placeholder="اكتب سؤالك أو الحالة... مثال: موظف في الحسابات تأخر ساعة ونصف للمرة الثانية هذا الشهر، ما الجزاء؟"></textarea>' +
-    '<div class="privacy">' + ic('shield') + '<div><b>لا تكتب أسماء أو أرقاماً قومية أو هواتف.</b> اكتب "موظف في المخازن" بدل اسمه؛ البرنامج يحذف الأرقام الحساسة تلقائياً وينبهك للأسماء.</div></div>' +
-    '<div class="row" style="margin-top:12px"><label class="small" style="display:flex;gap:6px;align-items:center;color:#C9D6E8;cursor:pointer">' +
-    '<input type="checkbox" id="follow"> متابعة على الأسئلة السابقة</label><span class="spacer"></span>' +
-    '<button class="btn accent" id="send">' + ic('send') + 'اسأل</button></div>' +
-    '<div class="suggs">' + SUGGESTIONS.map(function (s) { return '<span class="chip sugg">' + esc(s) + '</span>'; }).join('') + '</div></div>' +
-    '<div id="answers"></div>';
+function viewAsk(v, opts) {
   var mode = 'question';
-  $$('#mode button', v).forEach(function (b) {
-    b.addEventListener('click', function () { mode = b.dataset.m; $$('#mode button', v).forEach(function (x) { x.classList.toggle('on', x === b); }); });
-  });
-  $$('.chip.sugg', v).forEach(function (c) { c.addEventListener('click', function () { $('#q').value = c.textContent; $('#q').focus(); }); });
+  v.innerHTML = '<div class="ask-layout"><div><div class="thread" id="thread"></div>' +
+    '<div class="composer"><div class="composer-box"><textarea id="q" rows="2" placeholder="اكتب سؤالك أو الحالة… مثال: موظف في الحسابات تأخر ساعة ونص للمرة التانية الشهر ده، ما الجزاء؟"></textarea>' +
+    '<div class="tools"><div class="seg" id="mode"><button class="on" data-m="question">سؤال</button><button data-m="case">حالة عملية</button></div>' +
+    '<span class="spacer"></span>' +
+    (state.session.length ? '<button class="btn ghost sm" id="newchat" title="محادثة جديدة">' + ic('plus') + 'محادثة جديدة</button>' : '') +
+    '<button class="tb-icon mic" id="mic" title="اسأل بصوتك" aria-label="اسأل بصوتك">' + ic('mic') + '</button>' +
+    '<button class="btn accent" id="send">' + ic('send') + 'اسأل</button></div></div>' +
+    '<div class="privacy">' + ic('shield') + '<span>متكتبش أسماء أو أرقام قومية أو تليفونات — اكتب "موظف في المخازن". البرنامج بيحذف الأرقام الحساسة وبينبهك للأسماء.</span></div></div></div>' +
+    '<aside class="card refs-panel" id="refs"><div class="card-head"><h2>' + ic('book') + ' المواد المرتبطة</h2></div><div id="refl"><div class="empty small">المواد اللي الإجابة بتعتمد عليها هتظهر هنا.</div></div></aside></div>';
+  var thread = $('#thread');
+  if (!state.session.length) {
+    thread.innerHTML = '<div class="welcome"><div class="orb"><img src="' + LOGO_IMG + '" alt=""></div><h2>اسأل المستشار القانوني</h2>' +
+      '<p>الإجابة من النصوص القانونية بس، مع رقم المادة والتحقق الآلي من كل اقتباس.</p><div class="suggs stagger">' +
+      SUGGESTIONS.map(function (s, i) { return '<div class="sugg" style="--i:' + i + '" data-m="' + s[1] + '">' + ic(s[1] === 'case' ? 'scale' : 'ask') + '<span>' + esc(s[0]) + '</span></div>'; }).join('') + '</div></div>';
+    $$('.sugg', thread).forEach(function (c) { c.addEventListener('click', function () { setMode(c.dataset.m); $('#q').value = $('span', c).textContent; submitQuestion(mode); }); });
+  } else {
+    state.session.forEach(function (r) { thread.insertAdjacentHTML('beforeend', '<div class="bubble-q">' + esc(r.question) + '</div>' + renderAnswer(r)); });
+    showRefs(state.session[state.session.length - 1]);
+  }
+  function setMode(m) { mode = m; $$('#mode button', v).forEach(function (x) { x.classList.toggle('on', x.dataset.m === m); }); }
+  $$('#mode button', v).forEach(function (b) { b.addEventListener('click', function () { setMode(b.dataset.m); }); });
+  var q = $('#q');
+  var grow = function () { q.style.height = 'auto'; q.style.height = Math.min(220, q.scrollHeight) + 'px'; };
+  q.addEventListener('input', grow);
+  q.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 900) { e.preventDefault(); submitQuestion(mode); } });
   $('#send').addEventListener('click', function () { submitQuestion(mode); });
-  $('#q').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitQuestion(mode); });
-  state.session.slice().reverse().forEach(function (r) { $('#answers').insertAdjacentHTML('beforeend', renderAnswer(r)); });
+  var nc = $('#newchat');
+  if (nc) nc.addEventListener('click', function () { state.session = []; go('ask'); });
+  setupMic($('#mic'), q);
+  if (opts.q) { q.value = opts.q; grow(); if (opts.send) submitQuestion(mode); }
+  else if (window.innerWidth > 900) q.focus();
+}
+
+/** السؤال بالصوت (Web Speech API — مجاني ومدعوم في Chrome و Edge و Safari). */
+function setupMic(btn, target) {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { btn.classList.add('hidden'); return; }
+  var rec = null;
+  btn.addEventListener('click', function () {
+    if (rec) { rec.stop(); return; }
+    rec = new SR();
+    rec.lang = 'ar-EG'; rec.interimResults = true; rec.continuous = false;
+    var base = target.value ? target.value.trim() + ' ' : '';
+    rec.onresult = function (e) {
+      var t = '';
+      for (var i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      target.value = base + t; target.dispatchEvent(new Event('input'));
+    };
+    rec.onerror = function (e) { toast(e.error === 'not-allowed' ? 'اسمح للمتصفح باستخدام الميكروفون' : 'معرفتش أسمع كويس، جرّب تاني', true); };
+    rec.onend = function () { rec = null; btn.classList.remove('rec'); };
+    btn.classList.add('rec');
+    rec.start();
+    toast('اتكلم دلوقتي… 🎙️');
+  });
 }
 
 function submitQuestion(mode) {
   var raw = $('#q').value.trim();
-  if (raw.length < 5) { toast('اكتب السؤال بتفصيل أكثر', true); return; }
+  if (raw.length < 5) { toast('اكتب السؤال بتفصيل أكتر', true); return; }
   privacyGate(raw).then(function (text) {
     if (text === null) { $('#q').focus(); return; }
-    var btn = $('#send'); btn.disabled = true;
+    var thread = $('#thread'), btn = $('#send');
+    var w = $('.welcome', thread); if (w) w.remove();
+    btn.disabled = true;
+    $('#q').value = ''; $('#q').style.height = 'auto';
+    thread.insertAdjacentHTML('beforeend', '<div class="bubble-q">' + esc(text) + '</div>');
     var box = document.createElement('div');
-    box.className = 'card';
-    box.innerHTML = '<div class="loading-line"><div class="spin"></div>جارٍ مراجعة النصوص القانونية وصياغة الإجابة...</div>' +
-      '<div class="skeleton"><div></div><div style="width:85%"></div><div style="width:70%"></div></div>';
-    $('#answers').prepend(box);
-    var history = $('#follow').checked ? state.session.slice(-3).map(function (r) { return { question: r.question, summary: r.answer.summary }; }) : [];
+    box.className = 'thinking';
+    box.innerHTML = '<div class="dots"><i></i><i></i><i></i></div><span class="step">' + THINK_STEPS[0] + '</span>';
+    thread.appendChild(box);
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var si = 0, stepTimer = setInterval(function () {
+      si = Math.min(THINK_STEPS.length - 1, si + 1);
+      var s = $('.step', box); if (s) { s.style.opacity = 0; setTimeout(function () { s.textContent = THINK_STEPS[si]; s.style.opacity = 1; }, 250); }
+    }, 2200);
+    var history = state.session.slice(-3).map(function (r) { return { question: r.question, summary: r.answer.summary }; });
     api('ask', { question: text, mode: mode, history: history }).then(function (r) {
       state.session.push(r);
       box.outerHTML = renderAnswer(r);
-      $('#q').value = '';
+      showRefs(r);
+      var cards = $$('.answer', thread); var last = cards[cards.length - 1];
+      if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!$('#newchat')) {
+        var nc = document.createElement('button');
+        nc.className = 'btn ghost sm'; nc.id = 'newchat'; nc.innerHTML = ic('plus') + 'محادثة جديدة';
+        nc.addEventListener('click', function () { state.session = []; go('ask'); });
+        $('#mic').parentNode.insertBefore(nc, $('#mic'));
+      }
     }).catch(function (e) {
-      box.innerHTML = '<div class="alert bad">' + ic('alert') + esc(e.message) + '</div>';
-    }).then(function () { btn.disabled = false; });
+      box.outerHTML = '<div class="alert bad">' + ic('alert') + '<div>' + esc(e.message) + '</div></div>';
+    }).then(function () { clearInterval(stepTimer); btn.disabled = false; });
+  });
+}
+
+/** لوحة "المواد المرتبطة": نصوص المواد اللي اعتمدت عليها آخر إجابة. */
+function showRefs(r) {
+  var box = $('#refl');
+  if (!box || !r) return;
+  var a = r.answer, refs = [], seen = {};
+  (a.legal_texts || []).concat(a.cross_law || []).forEach(function (t) {
+    var k = t.source + '|' + t.article; if (seen[k]) return; seen[k] = 1; refs.push(t);
+  });
+  if (!refs.length) { box.innerHTML = '<div class="empty small">مفيش مواد مباشرة في الإجابة دي.</div>'; return; }
+  box.innerHTML = refs.slice(0, 8).map(function (t, i) {
+    return '<div class="ref" style="animation-delay:' + (i * 70) + 'ms" data-r="' + i + '"><h4>' + refChip(t.source, t.article) + '</h4><div class="tx small">' + esc(t.quote || t.note || '') + '</div></div>';
+  }).join('');
+  refs.slice(0, 8).forEach(function (t, i) {
+    api('kb.article', { source: t.source, num: t.article }).then(function (art) {
+      var el = $('.ref[data-r="' + i + '"] .tx', box); if (el) el.textContent = art.text;
+    }).catch(function () {});
   });
 }
 
@@ -458,16 +912,16 @@ function renderAnswer(r) {
     return {};
   };
   var conf = CONF[a.confidence] || ['', 'b-info'];
-  var h = '<div class="card answer" data-id="' + esc(r.id) + '"><div class="q">' + ic('ask') + ' ' + esc(r.question) + '</div><div class="row">';
+  var h = '<div class="card answer" data-id="' + esc(r.id) + '"><div class="a-head"><div class="row">';
   if (r.provider === 'search') h += '<span class="badge b-info">' + ic('search') + 'وضع البحث فقط</span>';
   else h += '<span class="badge ' + conf[1] + '">' + conf[0] + '</span>';
-  h += ver.all_ok ? '<span class="badge b-ok">' + ic('check') + 'كل المراجع تم التحقق منها</span>'
-                  : '<span class="badge b-bad">' + ic('alert') + ver.problems + ' مرجع لم يتطابق — راجع قبل الاعتماد</span>';
+  h += ver.all_ok ? '<span class="badge b-ok">' + ic('check') + 'كل المراجع اتراجعت</span>'
+                  : '<span class="badge b-bad">' + ic('alert') + ver.problems + ' مرجع مش مطابق — راجع قبل الاعتماد</span>';
   if (!a.found) h += '<span class="badge b-warn">لا يوجد نص صريح في المراجع المتاحة</span>';
   h += '</div>';
   if (r.notice) h += '<div class="alert warn">' + ic('info') + '<div>' + esc(r.notice) + '</div></div>';
-  if (r.redactions && r.redactions.length) h += '<div class="alert info">' + ic('shield') + '<div>تم حذف بيانات حساسة من السؤال تلقائياً قبل إرساله.</div></div>';
-  h += '<div class="summary">' + esc(a.summary) + '</div>';
+  if (r.redactions && r.redactions.length) h += '<div class="alert info">' + ic('shield') + '<div>اتحذفت بيانات حساسة من السؤال تلقائياً قبل إرساله.</div></div>';
+  h += '<div class="summary">' + esc(a.summary) + '</div></div><div class="a-body">';
 
   h += '<div class="sec"><div class="sec-t"><span class="n">1</span>النص القانوني والمادة المرجعية</div>';
   if (!(a.legal_texts || []).length) h += '<div class="muted">لم يُعثر على نص مباشر في المراجع المتاحة.</div>';
@@ -498,17 +952,51 @@ function renderAnswer(r) {
     h += '<div class="alert warn">' + ic('alert') + '<div><b>مراجع غير متاحة يحتاجها هذا السؤال:</b><ul style="margin:4px 0 0">' +
       a.missing_references.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div></div>';
   }
-  h += '<div class="feedback"><span class="small muted">هل الإجابة دقيقة؟</span>' +
-       '<button class="btn ghost sm" data-fb="good">👍 نعم</button><button class="btn ghost sm" data-fb="bad">👎 بها خطأ</button></div></div>';
+  // مخالفة من لائحة الجزاءات في الإجابة ← زر إنشاء المستند مباشرة
+  var pen = (a.legal_texts || []).concat(a.cross_law || []).filter(function (t) { return t.source === 'penreg' && /^\d+$/.test(String(t.article)); })[0];
+  h += '</div><div class="a-actions">' +
+    '<button class="btn ghost sm" data-aa="copy">' + ic('copy') + 'نسخ</button>' +
+    '<button class="btn ghost sm" data-aa="wa">' + ic('share') + 'واتساب</button>' +
+    '<button class="btn ghost sm" data-aa="print">' + ic('print') + 'PDF</button>' +
+    (pen ? '<button class="btn soft sm" data-aa="doc" data-v="' + esc(pen.article) + '">' + ic('file') + 'اعمل قرار الجزاء (مخالفة ' + esc(pen.article) + ')</button>' : '') +
+    '<span class="spacer"></span><div class="feedback"><span class="small muted">الإجابة دقيقة؟</span>' +
+    '<button class="btn ghost sm" data-fb="good">👍</button><button class="btn ghost sm" data-fb="bad">👎</button></div></div></div>';
   return h;
 }
+
+/** نص الإجابة كاملاً (للنسخ والمشاركة). */
+function answerText(r) {
+  var a = r.answer, t = '❓ ' + r.question + '\n\n✅ ' + a.summary + '\n';
+  if ((a.legal_texts || []).length) t += '\n📌 النص القانوني:\n' + a.legal_texts.map(function (x) { return '• ' + (x.source === 'penreg' ? 'مخالفة ' : 'مادة ') + x.article + ' (' + srcShort(x.source) + '): ' + x.quote; }).join('\n') + '\n';
+  if (a.explanation) t += '\n📖 التفسير:\n' + a.explanation.replace(/\*\*/g, '') + '\n';
+  if ((a.cross_law || []).length) t += '\n🔗 التقاطع مع القوانين الأخرى:\n' + a.cross_law.map(function (x) { return '• ' + srcShort(x.source) + ' م ' + x.article + ': ' + x.note; }).join('\n') + '\n';
+  if ((a.examples || []).length) t += '\n💡 أمثلة:\n' + a.examples.map(function (e) { return '• ' + e.title + ': ' + e.scenario + ' ← ' + e.outcome; }).join('\n') + '\n';
+  return t + '\n— المستشار القانوني · ' + (window.COMPANY || 'Full Speed');
+}
+function findAnswer(id) {
+  for (var i = 0; i < state.session.length; i++) if (String(state.session[i].id) === String(id)) return state.session[i];
+  return state.lastHistory && String(state.lastHistory.id) === String(id) ? state.lastHistory : null;
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-aa]');
+  if (!b) return;
+  var card = b.closest('.answer'), r = findAnswer(card.dataset.id), act = b.dataset.aa;
+  if (act === 'doc') { $$('.modal-bg').forEach(function (x) { x.remove(); }); go('docs', { violation: b.dataset.v, type: 'decision' }); return; }
+  if (!r) return;
+  if (act === 'copy') copyText(answerText(r));
+  else if (act === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(answerText(r)), '_blank', 'noopener');
+  else if (act === 'print') {
+    card.classList.add('printing');
+    setTimeout(function () { window.print(); card.classList.remove('printing'); }, 50);
+  }
+});
 document.addEventListener('click', function (e) {
   var b = e.target.closest && e.target.closest('[data-fb]');
   if (!b) return;
   var card = b.closest('.answer'), rating = b.dataset.fb, note = '';
-  if (rating === 'bad') note = prompt('ما الخطأ في الإجابة؟ (اختياري — يساعد في التحسين)') || '';
+  if (rating === 'bad') note = prompt('إيه الغلط في الإجابة؟ (اختياري — بيساعد في التحسين)') || '';
   api('feedback', { id: card.dataset.id, rating: rating, note: note }).then(function () {
-    $('.feedback', card).innerHTML = '<span class="badge b-ok">' + ic('check') + 'شكراً، تم تسجيل تقييمك</span>';
+    $('.feedback', card).innerHTML = '<span class="badge b-ok">' + ic('check') + 'شكراً، اتسجل تقييمك</span>';
   }).catch(function (err) { toast(err.message, true); });
 });
 
@@ -518,7 +1006,8 @@ function viewPenalties(v) {
   api('pen.list').then(function (d) {
     var today = new Date().toISOString().slice(0, 10);
     v.innerHTML =
-      '<div class="card"><div class="card-head"><h2>' + ic('scale') + ' اختر المخالفة</h2></div>' +
+      '<div class="stepper" id="stp"><div class="on"><b>1</b><span>اختر المخالفة</span></div><div><b>2</b><span>التكرار والمواعيد</span></div><div><b>3</b><span>الجزاء والإجراءات</span></div></div>' +
+      '<div class="card" id="p1"><div class="card-head"><h2>' + ic('scale') + ' اختر المخالفة</h2><span class="spacer"></span><button class="btn ghost sm hidden" id="chg">تغيير المخالفة</button></div>' +
       (d.missing.length ? '<div class="alert warn">' + ic('info') + '<div>المخالفات ' + d.missing[0] + ' إلى ' + d.missing[d.missing.length - 1] +
         ' غير موجودة في نسخة اللائحة المرفوعة' + (state.user.role === 'admin' ? '؛ أدخلها من صفحة الإدارة أو من جدول Penalties.' : '، ويمكن لمدير النظام إدخالها.') + '</div></div>' : '') +
       '<input class="input" id="vs" placeholder="ابحث: تأخير، غياب، تلاعب، زي، هاتف، سلامة..." style="margin-bottom:10px">' +
@@ -537,6 +1026,13 @@ function viewPenalties(v) {
       '<div class="field"><label class="lbl">أيام خُصمت هذا الشهر كجزاءات</label><input class="input" id="already" type="number" min="0" step="0.25" value="0"></div>' +
       '</div></details><button class="btn accent" id="calcp">' + ic('scale') + 'احسب الجزاء</button></div><div id="pout"></div>';
     var sel = null;
+    var setStep = function (n) {
+      $$('#stp > div').forEach(function (d, i) { d.classList.toggle('on', i === n - 1); d.classList.toggle('done', i < n - 1); });
+    };
+    $('#chg').addEventListener('click', function () {
+      $('#vl').classList.remove('hidden'); $('#vs').classList.remove('hidden'); $('#chg').classList.add('hidden');
+      $('#pf').classList.add('hidden'); $('#pout').innerHTML = ''; setStep(1); $('#vs').focus();
+    });
     $('#vs').addEventListener('input', function (e) {
       var q = e.target.value.trim();
       $$('.vitem', v).forEach(function (el) { el.classList.toggle('hidden', !!q && el.textContent.indexOf(q) < 0); });
@@ -546,6 +1042,8 @@ function viewPenalties(v) {
         $$('.vitem', v).forEach(function (x) { x.classList.toggle('on', x === el); });
         sel = d.violations.filter(function (x) { return x.num === +el.dataset.n; })[0];
         $('#pf').classList.remove('hidden');
+        setStep(2);
+        $('#vl').classList.add('hidden'); $('#vs').classList.add('hidden'); $('#chg').classList.remove('hidden');
         $('#vt-sel').textContent = 'المخالفة ' + sel.num;
         $('#cases').innerHTML = '<p style="margin-top:0">' + esc(sel.text) + '</p>' + (sel.cases.length > 1
           ? '<div class="field"><label class="lbl">الحالة</label><select class="input" id="case">' +
@@ -586,7 +1084,8 @@ function viewPenalties(v) {
           '<div class="sec"><div class="sec-t">' + ic('book') + 'المراجع</div>' + r.references.map(function (x) { return refChip(x.source, x.article); }).join('') + '</div>' +
           '<div style="margin-top:16px"><button class="btn soft" id="todocs">' + ic('file') + 'إنشاء مستندات التحقيق والجزاء لهذه المخالفة</button></div></div>';
         $('#pout').innerHTML = h;
-        $('#todocs').addEventListener('click', function () { state.docViolation = r.violation.num; go('docs'); });
+        setStep(3);
+        $('#todocs').addEventListener('click', function () { go('docs', { violation: r.violation.num }); });
         $('#pout').scrollIntoView({ behavior: 'smooth' });
       }).catch(function (e) { toast(e.message, true); }).then(function () { b.disabled = false; });
     });
@@ -641,7 +1140,8 @@ function renderCalc(k, r) {
 }
 
 // ---------------- المستندات ----------------
-function viewDocs(v) {
+function viewDocs(v, opts) {
+  opts = opts || {};
   v.innerHTML = '<div class="card"><div class="skeleton"><div></div><div></div></div></div>';
   Promise.all([api('docs.fields'), api('pen.list')]).then(function (res) {
     var cfg = res[0], pens = res[1].violations, type = 'notice';
@@ -663,8 +1163,8 @@ function viewDocs(v) {
       $('#dres').innerHTML = '';
     }
     $$('#dt button', v).forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.t); }); });
-    show('notice');
-    if (state.docViolation) { $('[name=violation_num]', v).value = state.docViolation; state.docViolation = null; }
+    show(opts.type || 'notice');
+    if (opts.violation) { $('[name=violation_num]', v).value = opts.violation; toast('اتملت المخالفة ' + opts.violation + ' — كمّل باقي البيانات'); }
     $('#dgo').addEventListener('click', function () {
       var fields = {};
       $$('#df .field:not(.hidden) [name]', v).forEach(function (i) { fields[i.name] = i.value; });
@@ -690,18 +1190,23 @@ function viewDocs(v) {
 
 // ---------------- القوانين ----------------
 function isAdmin() { return state.user && state.user.role === 'admin'; }
-function viewLaws(v) {
+function viewLaws(v, opts) {
+  if (opts && opts.source) return openSource(v, opts.source);
   v.innerHTML = '<div class="card"><div class="row"><input class="input" id="ls" placeholder="ابحث في كل المراجع: الإجازة السنوية، الخصم من الأجر، مادة 121..." style="flex:1;min-width:200px">' +
-    '<button class="btn" id="lgo">' + ic('search') + 'بحث</button></div><div id="lres"></div></div>' +
+    '<button class="btn" id="lgo">' + ic('search') + 'بحث</button><button class="btn ghost" id="lfav">' + ic('star') + 'المفضلة</button></div><div id="lres"></div></div>' +
     (isAdmin() ? '<div class="row" style="margin-bottom:12px"><button class="btn accent" id="lnew">' + ic('plus') + 'إضافة قانون أو لائحة جديدة</button>' +
       '<span class="small muted">لتعديل أو إضافة مواد لمرجع موجود: افتحه من القائمة.</span></div>' : '') +
     '<div class="grid g2" id="srcs"></div>';
   if (isAdmin()) $('#lnew').addEventListener('click', function () { sourceForm(v, null); });
+  $('#lfav').addEventListener('click', showFavorites);
   api('kb.sources').then(function (list) {
     list.forEach(function (s) { state.sources[s.id] = s; });
-    $('#srcs').innerHTML = list.map(function (s) {
-      return '<div class="card src-card" data-s="' + s.id + '"><div class="row"><h3>' + esc(s.short) + '</h3><span class="spacer"></span><span class="badge b-info">' + s.count + (s.id === 'penreg' ? ' مخالفة' : ' مادة') + '</span></div>' +
-        '<div class="small" style="margin:6px 0">' + esc(s.title) + '</div><div class="small muted">' + esc(s.notes) + '</div></div>';
+    var max = Math.max.apply(null, list.map(function (s) { return s.count; }).concat([1]));
+    $('#srcs').className = 'grid g2 stagger';
+    $('#srcs').innerHTML = list.map(function (s, i) {
+      return '<div class="card src-card lift" style="--i:' + i + '" data-s="' + s.id + '"><div class="row"><h3>' + esc(s.short) + '</h3><span class="spacer"></span><span class="badge b-ok">' + s.count + (s.id === 'penreg' ? ' مخالفة' : ' مادة') + '</span></div>' +
+        '<div class="small" style="margin:6px 0">' + esc(s.title) + '</div><div class="small muted">' + esc(s.notes) + '</div>' +
+        '<div class="bar"><i style="width:' + Math.max(4, Math.round(s.count / max * 100)) + '%"></i></div></div>';
     }).join('');
     $$('.src-card', v).forEach(function (c) { c.addEventListener('click', function () { openSource(v, c.dataset.s); }); });
   });
@@ -893,7 +1398,7 @@ function viewHistory(v) {
     $$('[data-h]', v).forEach(function (a) {
       a.addEventListener('click', function (e) {
         e.preventDefault();
-        api('history.get', { id: a.dataset.h }).then(function (r) { $('#hv').innerHTML = renderAnswer(r); $('#hv').scrollIntoView({ behavior: 'smooth' }); })
+        api('history.get', { id: a.dataset.h }).then(function (r) { state.lastHistory = r; $('#hv').innerHTML = renderAnswer(r); $('#hv').scrollIntoView({ behavior: 'smooth' }); })
           .catch(function (err) { toast(err.message, true); });
       });
     });
@@ -914,21 +1419,30 @@ function viewAdmin(v) {
       aiCard(o.ai) +
 
       '<div class="card"><div class="card-head"><h2>' + ic('user') + ' المستخدمون</h2><span class="spacer"></span><span class="badge b-info">' + o.users.length + ' من ' + o.maxUsers + '</span></div>' +
-      '<div class="tw"><table class="t"><thead><tr><th>الاسم</th><th>المستخدم</th><th>الدور</th><th>الأسئلة</th><th>آخر دخول</th><th></th></tr></thead><tbody>' +
+      '<div class="tw"><table class="t"><thead><tr><th>الاسم</th><th>الإيميل</th><th>الدور</th><th>الأسئلة</th><th>آخر دخول</th><th></th></tr></thead><tbody>' +
       o.users.map(function (u) {
-        return '<tr><td>' + esc(u.full_name) + '</td><td dir="ltr" style="text-align:right">' + esc(u.username) + '</td><td>' + (u.role === 'admin' ? 'مدير النظام' : 'مستخدم') + '</td>' +
+        return '<tr><td>' + esc(u.full_name) + '</td><td dir="ltr" style="text-align:right">' + (u.email ? esc(u.email) : '<span class="badge b-warn">بدون إيميل</span>') + '</td><td>' + (u.role === 'admin' ? 'مدير النظام' : 'مستخدم') + '</td>' +
           '<td class="num">' + u.questions + '</td><td class="small num">' + esc(String(u.last_login).slice(0, 16)) + '</td><td><div class="row">' +
           (u.active ? '' : '<span class="badge b-bad">موقوف</span>') +
           (u.username !== state.user.username ? '<button class="btn ghost sm" data-ut="' + esc(u.username) + '">' + (u.active ? 'إيقاف' : 'تفعيل') + '</button>' +
             '<button class="btn danger sm" data-ud="' + esc(u.username) + '">' + ic('trash') + '</button>' : '') +
-          '<button class="btn soft sm" data-up="' + esc(u.username) + '">' + ic('key') + '</button></div></td></tr>';
+          '<button class="btn soft sm" data-ue="' + esc(u.username) + '" data-em="' + esc(u.email) + '" title="تغيير الإيميل">@</button>' +
+          '<button class="btn soft sm" data-up="' + esc(u.username) + '" title="تغيير كلمة المرور">' + ic('key') + '</button></div></td></tr>';
       }).join('') + '</tbody></table></div>' +
       (o.users.length < o.maxUsers ? '<div class="sec"><div class="sec-t">إضافة مستخدم</div><div class="grid g3">' +
         '<div class="field"><label class="lbl">الاسم الكامل</label><input class="input" id="nfn"></div>' +
-        '<div class="field"><label class="lbl">اسم المستخدم (إنجليزي)</label><input class="input" id="nun" dir="ltr"></div>' +
+        '<div class="field"><label class="lbl">الإيميل (للدخول)</label><input class="input" id="nun" type="email" dir="ltr"></div>' +
         '<div class="field"><label class="lbl">كلمة المرور</label><input class="input" id="npw" type="text" dir="ltr"><div class="hint">8 أحرف على الأقل، أرقام وحروف</div></div>' +
         '<div class="field"><label class="lbl">الدور</label><select class="input" id="nrole"><option value="user">مستخدم</option><option value="admin">مدير نظام</option></select></div>' +
         '</div><button class="btn accent" id="nadd">إضافة</button></div>' : '<div class="alert info">' + ic('info') + '<div>وصلت للحد الأقصى (' + o.maxUsers + ' حسابات).</div></div>') + '</div>' +
+
+      '<div class="card"><div class="card-head"><h2>' + ic('user') + ' الدخول بحساب Google</h2><span class="spacer"></span>' +
+      (o.settings.google_client_id ? '<span class="badge b-ok">مفعّل</span>' : '<span class="badge b-info">غير مفعّل</span>') + '</div>' +
+      '<div class="small muted">اختياري. بيضيف زرار "الدخول بحساب Google" في صفحة الدخول، للإيميلات المسجلة في البرنامج بس. ' +
+      'محتاج <b>OAuth Client ID</b> مجاني من console.cloud.google.com ← APIs &amp; Services ← Credentials ← Create OAuth client ID ← Web application، ' +
+      'وفي Authorized JavaScript origins ضيف: <span dir="ltr">' + esc(location.origin) + '</span></div>' +
+      '<div class="row" style="margin-top:10px"><input class="input" id="gcid" dir="ltr" placeholder="123456-xxxx.apps.googleusercontent.com" value="' + esc(o.settings.google_client_id) + '" style="flex:1;min-width:240px">' +
+      '<button class="btn" id="gsave">حفظ</button></div></div>' +
 
       '<div class="card"><div class="card-head"><h2>' + ic('scale') + ' مخالفات لائحة الجزاءات</h2></div>' +
       (pen.missing.length ? '<div class="alert warn">' + ic('alert') + '<div>ناقصة من الملف المرفوع: <b>' + pen.missing.join('، ') + '</b>. أدخلها هنا من النسخة الورقية كما هي، أو اكتبها مباشرة في جدول Penalties.</div></div>' : '<div class="alert ok">' + ic('check') + '<div>كل المخالفات من 1 إلى 102 موجودة.</div></div>') +
@@ -983,12 +1497,17 @@ function viewAdmin(v) {
     });
     var nadd = $('#nadd');
     if (nadd) nadd.addEventListener('click', function () {
-      api('admin.userCreate', { fullName: $('#nfn').value, username: $('#nun').value, password: $('#npw').value, role: $('#nrole').value })
+      api('admin.userCreate', { fullName: $('#nfn').value, email: $('#nun').value, password: $('#npw').value, role: $('#nrole').value })
         .then(function () { reload('تمت إضافة المستخدم'); }).catch(fail);
     });
     $$('[data-ut]', v).forEach(function (b) { b.addEventListener('click', function () { api('admin.userToggle', { username: b.dataset.ut }).then(function () { reload('تم التحديث'); }).catch(fail); }); });
     $$('[data-ud]', v).forEach(function (b) { b.addEventListener('click', function () {
       if (confirm('حذف المستخدم ' + b.dataset.ud + ' نهائياً؟')) api('admin.userDelete', { username: b.dataset.ud }).then(function () { reload('تم الحذف'); }).catch(fail); }); });
+    $$('[data-ue]', v).forEach(function (b) { b.addEventListener('click', function () {
+      var e = prompt('الإيميل الجديد للمستخدم:', b.dataset.em || '');
+      if (e) api('admin.userEmail', { username: b.dataset.ue, email: e }).then(function () { reload('تم تغيير الإيميل'); }).catch(fail); }); });
+    $('#gsave').addEventListener('click', function () {
+      api('admin.saveSettings', { google_client_id: $('#gcid').value }).then(function () { reload('تم الحفظ'); }).catch(fail); });
     $$('[data-up]', v).forEach(function (b) { b.addEventListener('click', function () {
       var p = prompt('كلمة المرور الجديدة للمستخدم ' + b.dataset.up + ' (8 أحرف على الأقل، أرقام وحروف):');
       if (p) api('admin.userPassword', { username: b.dataset.up, password: p }).then(function () { toast('تم تغيير كلمة المرور'); }).catch(fail); }); });

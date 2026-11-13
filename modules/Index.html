@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="light">
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="theme-color" content="#0B2545">
+  <meta name="theme-color" content="#F4F6F3">
   <!--WEB_HEAD-->
+  <script>
+    // الوضع الفاتح هو الأساسي؛ نطبّق اختيار المستخدم قبل رسم الصفحة حتى لا تومض
+    try { if (localStorage.getItem('fs_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Cairo:wght@600;700;800&family=Geist+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <?!= include('Styles'); ?>
 </head>
 <body>

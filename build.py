@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 MOD = ROOT / "modules"
-GS_ORDER = ["Code", "Store", "Auth", "KbDict", "Kb", "Penalties", "Calc", "Docs", "Ai", "Manage"]
+GS_ORDER = ["Code", "Store", "Auth", "KbDict", "Kb", "Penalties", "Calc", "Docs", "Ai", "Manage", "Extras"]
 
 HEADER = """/**
  * ============================================================================

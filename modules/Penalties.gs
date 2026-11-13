@@ -240,6 +240,7 @@ function adminPenSave_(d, admin) {
   sortPenalties_();
   violations_.memo = null;
   kbReset_();
+  newsLog_(admin.full_name, (old ? 'تعديل' : 'إضافة') + ' المخالفة ' + num + ' في لائحة الجزاءات', { source: 'penreg', num: String(num) });
   return { done: true };
 }
 

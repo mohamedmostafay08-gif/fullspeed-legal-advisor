@@ -1,6 +1,6 @@
 // Service worker: يخلي التطبيق يفتح بسرعة ويتثبت على الموبايل
 // لما تعدّل أي ملف في docs، غيّر رقم النسخة دي عشان المستخدمين ياخدوا التحديث
-var VERSION = 'legal-v2';
+var VERSION = 'legal-v3';
 var SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
